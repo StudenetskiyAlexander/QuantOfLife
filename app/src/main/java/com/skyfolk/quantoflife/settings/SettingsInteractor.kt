@@ -2,6 +2,7 @@ package com.skyfolk.quantoflife.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.GraphSelectedYear
 import com.skyfolk.quantoflife.QLog
 import com.skyfolk.quantoflife.R
@@ -65,7 +66,7 @@ class SettingsInteractor(private val context: Context) {
 
     var selectedGraphQuantSecond by preferences.quantFilter(
         key = { SELECTED_GRAPH_SECOND_QUANT },
-        defaultValue = QuantFilter.Nothing
+        defaultValue = QuantFilter.All
     )
 
     var selectedGraphMeasure by preferences.measure(
@@ -74,6 +75,8 @@ class SettingsInteractor(private val context: Context) {
     )
 
     var selectedYearFilter by preferences.graphSelectedYear()
+    var selectedYearFilter2 by preferences.graphSelectedYear()
+    var selectedGraphMode by preferences.graphSelectedMode()
 
     var statisticTimeIntervalSelectedElement by preferences.string(
         key = { SELECTED_RADIO_IN_STATISTIC },
@@ -233,8 +236,6 @@ class SettingsInteractor(private val context: Context) {
                 thisRef: Any,
                 property: KProperty<*>
             ): Measure {
-//                QLog.d("skyfolk-settings","read measure = ${getString(key(property), defaultValue.toString())
-//                    ?: defaultValue.toString()}, for example = ${Measure.TotalPhysical.name}")
                 return when (getString(key(property), defaultValue.toString())
                     ?: defaultValue.toString()) {
                     Measure.TotalCount.name -> Measure.TotalCount
@@ -251,6 +252,33 @@ class SettingsInteractor(private val context: Context) {
                 thisRef: Any,
                 property: KProperty<*>,
                 value: Measure
+            ) {
+                edit().putString(key(property), value.name).apply()
+            }
+        }
+
+    private fun SharedPreferences.graphSelectedMode(
+        defaultValue: GraphSelectedMode = GraphSelectedMode.Common,
+        key: (KProperty<*>) -> String = KProperty<*>::name
+    ): ReadWriteProperty<Any, GraphSelectedMode> =
+        object : ReadWriteProperty<Any, GraphSelectedMode> {
+            override fun getValue(
+                thisRef: Any,
+                property: KProperty<*>
+            ): GraphSelectedMode {
+                return when (getString(key(property), defaultValue.toString())
+                    ?: defaultValue.toString()) {
+                    GraphSelectedMode.Common.name -> GraphSelectedMode.Common
+                    GraphSelectedMode.Comparison.name -> GraphSelectedMode.Comparison
+                    GraphSelectedMode.Dependence.name -> GraphSelectedMode.Dependence
+                    else -> GraphSelectedMode.Common
+                }
+            }
+
+            override fun setValue(
+                thisRef: Any,
+                property: KProperty<*>,
+                value: GraphSelectedMode
             ) {
                 edit().putString(key(property), value.name).apply()
             }
@@ -342,7 +370,6 @@ class SettingsInteractor(private val context: Context) {
             ): QuantFilter {
                 return when (val quant = getString(key(property), defaultValue.toString())
                     ?: defaultValue.toString()) {
-                    "Ничего" -> QuantFilter.Nothing
                     "Все события" -> QuantFilter.All
                     else -> QuantFilter.OnlySelected(quant)
                 }

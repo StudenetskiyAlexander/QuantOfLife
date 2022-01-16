@@ -9,4 +9,6 @@
     <color name="fabCover">#65000000</color>
     <color name="transparent">#00000000</color>
     <color name="bottom_menu_background">#2C2626</color>
+    <color name="red">#FF0000</color>
+    <color name="green">#00FF00</color>
 </resources>

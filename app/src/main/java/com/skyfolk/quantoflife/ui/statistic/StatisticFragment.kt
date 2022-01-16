@@ -3,6 +3,7 @@ package com.skyfolk.quantoflife.ui.statistic
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,11 +15,10 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.github.mikephil.charting.components.XAxis.XAxisPosition
-import com.github.mikephil.charting.data.BarData
-import com.github.mikephil.charting.data.BarDataSet
-import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
+import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.GraphSelectedYear
 import com.skyfolk.quantoflife.QLog
 import com.skyfolk.quantoflife.R
@@ -28,12 +28,17 @@ import com.skyfolk.quantoflife.meansure.fromPositionToMeasure
 import com.skyfolk.quantoflife.ui.feeds.FeedsComposeFragment
 import com.skyfolk.quantoflife.ui.theme.Colors
 import com.skyfolk.quantoflife.ui.theme.toInt
-import com.skyfolk.quantoflife.utils.fromPositionToTimeInterval
-import com.skyfolk.quantoflife.utils.toDate
-import com.skyfolk.quantoflife.utils.toDateWithoutHourAndMinutes
+import com.skyfolk.quantoflife.utils.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 class StatisticFragment : Fragment(), OnChartValueSelectedListener {
+
+    companion object {
+
+        const val FIRST_LINE_COLOR = Color.RED
+        const val SECOND_LINE_COLOR = Color.GREEN
+    }
+
     private val viewModel: StatisticViewModel by viewModel()
     private lateinit var binding: StatisticFragmentBinding
 
@@ -106,15 +111,15 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                                 }
                             }
 
-                        val dataSets = arrayListOf<BarDataSet>()
-                        val set1 = BarDataSet(data.entries[0].entries, data.entries[0].name)
+                        val dataSets = arrayListOf<LineDataSet>()
+                        val set1 = LineDataSet(data.entries[0].entries.map {it}, data.entries[0].name)
 
                         setDefaultDataSetPropertiesForFirstSet(set1)
 
                         dataSets.add(set1)
 
                         if (data.entries.size > 1) {
-                            val set2 = BarDataSet(data.entries[1].entries, data.entries[1].name)
+                            val set2 = LineDataSet(data.entries[1].entries.map {it}, data.entries[1].name)
                             setDefaultDataSetPropertiesForSecondSet(set2)
                             dataSets.add(set2)
                         }
@@ -139,7 +144,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                                 binding.chart.xAxis.valueFormatter = xAxisFormatter
                             }
 
-                        val dataForGraph = BarData(dataSets.toList())
+                        val dataForGraph = LineData(dataSets.toList())
                         binding.chart.invalidate()
                         binding.chart.data = dataForGraph
 
@@ -163,7 +168,6 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
         viewModel.selectedFilter.observe(viewLifecycleOwner) { filter: SelectedGraphFilter? ->
             filter?.let { it: SelectedGraphFilter ->
                 val listOfQuantName = it.listOfQuants.map { it.name }.toMutableList()
-                listOfQuantName.add(0, "Ничего")
                 listOfQuantName.add(0, "Все события")
                 val quantsSpinnerAdapter = ArrayAdapter(
                     requireContext(),
@@ -174,6 +178,9 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                 binding.eventSpinner.adapter = quantsSpinnerAdapter
                 binding.eventSpinner2.adapter = quantsSpinnerAdapter
 
+                Log.d("skyfolk-graph", "onCreateView: ${it.selectedMode}")
+
+                binding.modeSpinner.setSelection(it.selectedMode.toPosition(), false)
                 binding.meansureSpinner.setSelection(it.measure.toPosition(), false)
                 binding.timePeriodSpinner.setSelection(it.timeInterval.toGraphPosition(), false)
                 binding.eventSpinner.setSelection(it.filter.toGraphPosition(listOfQuantName), false)
@@ -195,6 +202,40 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     it.selectedYear.toGraphPosition(listOfYears),
                     false
                 )
+                binding.yearPeriodSpinner2.adapter = yearsSpinnerAdapter
+                binding.yearPeriodSpinner2.setSelection(
+                    it.selectedYear2.toGraphPosition(listOfYears),
+                    false
+                )
+
+                with(binding) {
+                    when (it.selectedMode) {
+                        GraphSelectedMode.Common -> {
+                            yearPeriodSpinner2.visibility = View.GONE
+                            yearPeriodSpinnerColor.visibility = View.GONE
+                            yearPeriodSpinnerColor2.visibility = View.GONE
+                            eventSpinner2.visibility = View.GONE
+                            eventSpinnerColor.visibility = View.GONE
+                            eventSpinnerColor2.visibility = View.GONE
+                        }
+                        GraphSelectedMode.Comparison -> {
+                            yearPeriodSpinner2.visibility = View.VISIBLE
+                            yearPeriodSpinnerColor.visibility = View.VISIBLE
+                            yearPeriodSpinnerColor2.visibility = View.VISIBLE
+                            eventSpinner2.visibility = View.GONE
+                            eventSpinnerColor.visibility = View.GONE
+                            eventSpinnerColor2.visibility = View.GONE
+                        }
+                        GraphSelectedMode.Dependence -> {
+                            yearPeriodSpinner2.visibility = View.GONE
+                            yearPeriodSpinnerColor.visibility = View.GONE
+                            yearPeriodSpinnerColor2.visibility = View.GONE
+                            eventSpinner2.visibility = View.VISIBLE
+                            eventSpinnerColor.visibility = View.VISIBLE
+                            eventSpinnerColor2.visibility = View.VISIBLE
+                        }
+                    }
+                }
 
                 viewModel.runSearch()
             }
@@ -209,7 +250,17 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setListeners() {
+        binding.modeSpinner.setOnTouchListener { _, _ ->
+            this.isSelectionFromTouch = true
+            false
+        }
+
         binding.yearPeriodSpinner.setOnTouchListener { _, _ ->
+            this.isSelectionFromTouch = true
+            false
+        }
+
+        binding.yearPeriodSpinner2.setOnTouchListener { _, _ ->
             this.isSelectionFromTouch = true
             false
         }
@@ -233,6 +284,28 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
             this.isSelectionFromTouch = true
             false
         }
+
+        binding.modeSpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View,
+                    position: Int,
+                    id: Long
+                ) {
+                    if (!isSelectionFromTouch) {
+                        return
+                    }
+
+                    val newSelectedMode = GraphSelectedMode.values().find {
+                        position == it.ordinal
+                    }
+                    viewModel.setGraphMode(newSelectedMode ?: GraphSelectedMode.Common)
+                    isSelectionFromTouch = false
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>) {}
+            }
 
         binding.yearPeriodSpinner.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
@@ -258,6 +331,30 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                 override fun onNothingSelected(parent: AdapterView<*>) {}
             }
 
+        binding.yearPeriodSpinner2.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View,
+                    position: Int,
+                    id: Long
+                ) {
+                    if (!isSelectionFromTouch) {
+                        return
+                    }
+                    val newSelectedYearName = when (position) {
+                        0 -> GraphSelectedYear.All
+                        else -> GraphSelectedYear.OnlyYear(
+                            parent.getItemAtPosition(position).toString().toInt()
+                        )
+                    }
+                    viewModel.setYearFilter2(filter = newSelectedYearName)
+                    isSelectionFromTouch = false
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>) {}
+            }
+
         binding.eventSpinner.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(
@@ -271,7 +368,6 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     }
                     val newSelectedEventFilterName = when (position) {
                         0 -> QuantFilter.All
-                        1 -> QuantFilter.Nothing
                         else -> QuantFilter.OnlySelected(
                             parent.getItemAtPosition(position).toString()
                         )
@@ -296,7 +392,6 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     }
                     val newSelectedEventFilterName = when (position) {
                         0 -> QuantFilter.All
-                        1 -> QuantFilter.Nothing
                         else -> QuantFilter.OnlySelected(
                             parent.getItemAtPosition(position).toString()
                         )
@@ -338,10 +433,6 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    QLog.d(
-                        "skyfolk-settings",
-                        "onItemSelectedListener"
-                    )
                     val timeInterval = position.fromPositionToTimeInterval()
                     viewModel.setTimeIntervalFilter(timeInterval = timeInterval)
                     isSelectionFromTouch = false
@@ -375,13 +466,39 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
         set.setValueTextColors(listOf(textColor))
     }
 
+    private fun setDataSetProperties(
+        set: LineDataSet,
+        lineColor: Int,
+        circleColor: Int,
+        textSize: Float,
+        textColor: Int,
+        fillDrawable: Int
+    ) {
+        set.color = lineColor
+        set.lineWidth = 4F
+        set.setDrawIcons(true)
+        set.valueTextSize = textSize
+        set.setValueTextColors(listOf(textColor))
+    }
+
     private fun setDefaultDataSetPropertiesForFirstSet(set: BarDataSet) {
         setDataSetProperties(
             set = set,
-            lineColor = Colors.Red.toInt(),
-            circleColor = Colors.Red.toInt(),
+            lineColor = FIRST_LINE_COLOR,
+            circleColor = FIRST_LINE_COLOR,
             textSize = 10f,
-            textColor = Colors.Red.toInt(),
+            textColor = FIRST_LINE_COLOR,
+            fillDrawable = R.drawable.fade_red
+        )
+    }
+
+    private fun setDefaultDataSetPropertiesForFirstSet(set: LineDataSet) {
+        setDataSetProperties(
+            set = set,
+            lineColor = FIRST_LINE_COLOR,
+            circleColor = FIRST_LINE_COLOR,
+            textSize = 10f,
+            textColor = FIRST_LINE_COLOR,
             fillDrawable = R.drawable.fade_red
         )
     }
@@ -389,10 +506,21 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
     private fun setDefaultDataSetPropertiesForSecondSet(set: BarDataSet) {
         setDataSetProperties(
             set = set,
-            lineColor = Colors.Green.toInt(),
-            circleColor = Colors.Green.toInt(),
+            lineColor = SECOND_LINE_COLOR,
+            circleColor = SECOND_LINE_COLOR,
             textSize = 10f,
-            textColor = Colors.Green.toInt(),
+            textColor = SECOND_LINE_COLOR,
+            fillDrawable = R.drawable.fade_green
+        )
+    }
+
+    private fun setDefaultDataSetPropertiesForSecondSet(set: LineDataSet) {
+        setDataSetProperties(
+            set = set,
+            lineColor = SECOND_LINE_COLOR,
+            circleColor = SECOND_LINE_COLOR,
+            textSize = 10f,
+            textColor = SECOND_LINE_COLOR,
             fillDrawable = R.drawable.fade_green
         )
     }

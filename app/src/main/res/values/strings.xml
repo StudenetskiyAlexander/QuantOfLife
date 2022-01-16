@@ -116,6 +116,12 @@
         <item>Выбранный интервал</item>
     </string-array>
 
+    <string-array name="graph_mode">
+        <item>Простой</item>
+        <item>Зависимости событий</item>
+        <item>Сравнение периодов</item>
+    </string-array>
+
     <string-array name="time_interval_to_graph">
         <item>День</item>
         <item>Неделя</item>

@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.BarEntry
+import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.GraphSelectedYear
 import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
@@ -45,7 +46,9 @@ class StatisticViewModel(
 
     private val _selectedFilter = MutableLiveData<SelectedGraphFilter>().apply {
         value = SelectedGraphFilter(
+            selectedMode = settingsInteractor.selectedGraphMode,
             selectedYear = settingsInteractor.selectedYearFilter,
+            selectedYear2 = settingsInteractor.selectedYearFilter2,
             timeInterval = settingsInteractor.selectedTimeInterval,
             measure = settingsInteractor.selectedGraphMeasure,
             filter = settingsInteractor.selectedGraphQuantFirst,
@@ -91,9 +94,19 @@ class StatisticViewModel(
         }
     }
 
+    fun setGraphMode(mode: GraphSelectedMode) {
+        settingsInteractor.selectedGraphMode = mode
+        _selectedFilter.value = _selectedFilter.value?.copy(selectedMode = mode)
+    }
+
     fun setYearFilter(filter: GraphSelectedYear) {
         settingsInteractor.selectedYearFilter = filter
         _selectedFilter.value = _selectedFilter.value?.copy(selectedYear = filter)
+    }
+
+    fun setYearFilter2(filter: GraphSelectedYear) {
+        settingsInteractor.selectedYearFilter2 = filter
+        _selectedFilter.value = _selectedFilter.value?.copy(selectedYear2 = filter)
     }
 
     fun setMeasureFilter(measure: Measure) {
@@ -145,7 +158,6 @@ class StatisticViewModel(
         val allFilteredEvents = allEvents.filter {
             when (quantFilter) {
                 QuantFilter.All -> true
-                QuantFilter.Nothing -> false
                 is QuantFilter.OnlySelected -> it.quantId == getQuantIdByName(quantFilter.selectQuant)
                 else -> true
             }
@@ -274,7 +286,6 @@ class StatisticViewModel(
 
         val name = when (quantFilter) {
             QuantFilter.All -> "Все события"
-            QuantFilter.Nothing -> "Ничего"
             is QuantFilter.OnlySelected -> quantFilter.selectQuant
             else -> "Все события"
         }
@@ -297,39 +308,82 @@ class StatisticViewModel(
     fun runSearch() {
         _barEntryData.value = StatisticFragmentState.Loading
 
+        val mode = _selectedFilter.value?.selectedMode ?: GraphSelectedMode.Common
         val onlyQuant = _selectedFilter.value?.filter
         val onlyQuant2 = _selectedFilter.value?.filter2
-        val timeInterval = _selectedFilter.value?.timeInterval
-        val measure = _selectedFilter.value?.measure
-        val selectedYear = _selectedFilter.value?.selectedYear
+        val timeInterval = _selectedFilter.value?.timeInterval ?: TimeInterval.Week
+        val measure = _selectedFilter.value?.measure ?: Measure.TotalCount
+        val selectedYear = _selectedFilter.value?.selectedYear ?: GraphSelectedYear.All
+        val selectedYear2 = _selectedFilter.value?.selectedYear2 ?: GraphSelectedYear.All
+
+        Log.d("skyfolk-graph", "runSearch: mode = $mode")
 
         viewModelScope.launch {
             val result: ArrayList<StatisticFragmentState.EntriesAndFirstDate> = arrayListOf()
-            if (onlyQuant != QuantFilter.Nothing) {
-                result.add(
-                    getEntries(
-                        selectedYear = selectedYear ?: GraphSelectedYear.All,
-                        allEvents = eventsStorageInteractor.getAllEvents(),
-                        allQuants = quantsStorageInteractor.getAllQuantsList(false),
-                        quantFilter = onlyQuant,
-                        startDayTime = settingsInteractor.startDayTime,
-                        timeInterval = timeInterval ?: TimeInterval.Week,
-                        measure = measure ?: Measure.TotalCount
+
+            when (mode) {
+                GraphSelectedMode.Common -> {
+                    result.add(
+                        getEntries(
+                            selectedYear = selectedYear,
+                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allQuants = quantsStorageInteractor.getAllQuantsList(false),
+                            quantFilter = onlyQuant,
+                            startDayTime = settingsInteractor.startDayTime,
+                            timeInterval = timeInterval,
+                            measure = measure
+                        )
                     )
-                )
-            }
-            if (onlyQuant2 != QuantFilter.Nothing) {
-                result.add(
-                    getEntries(
-                        selectedYear = selectedYear ?: GraphSelectedYear.All,
-                        allEvents = eventsStorageInteractor.getAllEvents(),
-                        allQuants = quantsStorageInteractor.getAllQuantsList(false),
-                        quantFilter = onlyQuant2,
-                        startDayTime = settingsInteractor.startDayTime,
-                        timeInterval = timeInterval ?: TimeInterval.Week,
-                        measure = measure ?: Measure.TotalCount
+                }
+                GraphSelectedMode.Comparison -> {
+                    result.add(
+                        getEntries(
+                            selectedYear = selectedYear,
+                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allQuants = quantsStorageInteractor.getAllQuantsList(false),
+                            quantFilter = onlyQuant,
+                            startDayTime = settingsInteractor.startDayTime,
+                            timeInterval = timeInterval,
+                            measure = measure
+                        )
                     )
-                )
+                    result.add(
+                        getEntries(
+                            selectedYear = selectedYear2,
+                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allQuants = quantsStorageInteractor.getAllQuantsList(false),
+                            quantFilter = onlyQuant,
+                            startDayTime = settingsInteractor.startDayTime,
+                            timeInterval = timeInterval,
+                            measure = measure
+                        )
+                    )
+                }
+                GraphSelectedMode.Dependence -> {
+                    result.add(
+                        getEntries(
+                            selectedYear = selectedYear,
+                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allQuants = quantsStorageInteractor.getAllQuantsList(false),
+                            quantFilter = onlyQuant,
+                            startDayTime = settingsInteractor.startDayTime,
+                            timeInterval = timeInterval,
+                            measure = measure
+                        )
+                    )
+                    result.add(
+                        getEntries(
+                            selectedYear = selectedYear,
+                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allQuants = quantsStorageInteractor.getAllQuantsList(false),
+                            quantFilter = onlyQuant2,
+                            startDayTime = settingsInteractor.startDayTime,
+                            timeInterval = timeInterval,
+                            measure = measure
+                        )
+                    )
+                }
+                null -> {}
             }
 
             _barEntryData.value = StatisticFragmentState.Entries(
@@ -363,7 +417,9 @@ sealed class StatisticFragmentState {
 }
 
 data class SelectedGraphFilter(
+    var selectedMode: GraphSelectedMode,
     var selectedYear: GraphSelectedYear,
+    var selectedYear2: GraphSelectedYear,
     var timeInterval: TimeInterval,
     var measure: Measure,
     var filter: QuantFilter,
