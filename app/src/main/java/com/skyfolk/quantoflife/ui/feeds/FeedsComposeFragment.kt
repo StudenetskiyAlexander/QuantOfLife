@@ -5,16 +5,18 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.skyfolk.quantoflife.QLog
@@ -27,6 +29,7 @@ import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
 import com.skyfolk.quantoflife.ui.theme.Colors
 import com.skyfolk.quantoflife.ui.theme.ComposeFlowTestTheme
 import com.skyfolk.quantoflife.utils.*
+import kotlinx.coroutines.delay
 import org.koin.android.viewmodel.ext.android.viewModel
 import java.util.*
 
@@ -52,6 +55,37 @@ class FeedsComposeFragment : Fragment() {
                 viewModel.setSelectedEventFilter(null, true)
             }
         }
+    }
+
+    class ExampleStyle {
+
+        @Composable
+        fun colorState(enabled: Boolean): State<Color> {
+
+            return animateColorAsState(
+                targetValue = if (enabled) Colors.Orange
+                else Colors.Green,
+                tween(4000)
+            )
+        }
+    }
+
+    @Preview
+    @Composable
+    fun Example(style: ExampleStyle = ExampleStyle()) {
+
+        var enabled by remember { mutableStateOf(false) }
+        LaunchedEffect(key1 = Unit, block = {
+
+            repeat(Int.MAX_VALUE) {
+                delay(3000)
+                enabled = enabled.not()
+            }
+        })
+
+        val color by style.colorState(enabled =enabled)
+
+        Box(modifier = Modifier.size(200.dp).background(color = color))
     }
 
     @ExperimentalComposeUiApi

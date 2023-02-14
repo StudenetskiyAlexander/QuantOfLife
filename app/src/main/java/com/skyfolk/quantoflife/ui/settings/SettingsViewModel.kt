@@ -1,10 +1,10 @@
 package com.skyfolk.quantoflife.ui.settings
 
-import android.os.Environment
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.skyfolk.quantoflife.QLog
 import com.skyfolk.quantoflife.db.DBInteractor
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
 import com.skyfolk.quantoflife.import.ImportInteractor
@@ -12,10 +12,8 @@ import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
 import com.skyfolk.quantoflife.utils.toCalendarOnlyHourAndMinute
 import kotlinx.coroutines.launch
-import java.io.*
+import java.io.File
 import java.util.*
-import com.skyfolk.quantoflife.*
-
 
 class SettingsViewModel(
     private val eventsStorageInteractor: EventsStorageInteractor,
@@ -34,13 +32,6 @@ class SettingsViewModel(
     private val _downloadFile = SingleLiveEvent<File>()
     val downloadFile: LiveData<File> get() = _downloadFile
 
-    private val _permissionRequestState = SingleLiveEvent<PermissionRequest>()
-    val permissionRequestState: LiveData<PermissionRequest> get() = _permissionRequestState
-
-    private val path =
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-    private val file = File(path, "qol_backup.realm")
-
     fun clearDatabase() {
         eventsStorageInteractor.clearDataBase()
         _toastState.value = SettingsFragment.SettingsFragmentToast.DatabaseCleared
@@ -51,20 +42,18 @@ class SettingsViewModel(
         _toastState.value = SettingsFragment.SettingsFragmentToast.EventsCleared
     }
 
-    fun importAllEventsAndQuantsFromFile() {
-        _permissionRequestState.value =
-            PermissionRequest("android.permission.WRITE_EXTERNAL_STORAGE") {
-                viewModelScope.launch {
-                    // TODO If file not exist
-                    val inputStream = FileInputStream(File(file.path))
-                    importInteractor.importAllFromFile(inputStream) { quantsImported, eventsImported ->
-                        _toastState.value = SettingsFragment.SettingsFragmentToast.ImportComplete(
-                            eventsImported,
-                            quantsImported
-                        )
-                    }
-                }
+    fun importAllEventsAndQuantsFromFile(context: Context, path: Uri) {
+
+        viewModelScope.launch {
+            val inputStream = context.contentResolver.openInputStream(path)
+            importInteractor.importAllFromFile(inputStream!!) { quantsImported, eventsImported ->
+                _toastState.value = SettingsFragment.SettingsFragmentToast.ImportComplete(
+                    eventsImported,
+                    quantsImported
+                )
+                inputStream.close()
             }
+        }
     }
 
     fun saveDBToFile(file: File) {

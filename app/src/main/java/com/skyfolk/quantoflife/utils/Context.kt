@@ -14,9 +14,9 @@ fun Context.showConfirmDialog(
     val builder = AlertDialog.Builder(this, R.style.AlertDialog)
     builder.setTitle(title)
         .setMessage(message)
-        .setPositiveButton(positiveButtonTitle) { dialog, _ ->
+        .setPositiveButton(positiveButtonTitle) { _, _ ->
             onPositiveClick()
         }
-        .setNegativeButton(negativeButtonTitle) { dialog, _ -> }
+        .setNegativeButton(negativeButtonTitle) { _, _ -> }
     builder.show()
 }
