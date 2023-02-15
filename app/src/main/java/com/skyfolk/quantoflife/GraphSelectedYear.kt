@@ -6,8 +6,8 @@ sealed class GraphSelectedYear {
 
     fun toGraphPosition(listOfYears: List<String>) : Int {
         return when (this) {
-            is GraphSelectedYear.All -> 0
-            is GraphSelectedYear.OnlyYear -> {
+            is All -> 0
+            is OnlyYear -> {
                 listOfYears.indexOf(year.toString())
             }
         }
