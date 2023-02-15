@@ -219,66 +219,68 @@ fun TextSearchField(placeholder: String, initialValue: String, onEnter: (String)
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
-        Row(
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 5.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        BasicTextField(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 5.dp, vertical = 5.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            BasicTextField(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .bringIntoViewRequester(relocationRequestor)
-                    .onFocusChanged {
-                        if ("$it" == "Active") {
-                            scope.launch {
-                                delay(200)
-                                relocationRequestor.bringIntoView()
-                            }
+                .fillMaxWidth(0.9f)
+                .bringIntoViewRequester(relocationRequestor)
+                .onFocusChanged {
+                    if ("$it" == "Active") {
+                        scope.launch {
+                            delay(200)
+                            relocationRequestor.bringIntoView()
                         }
-                    },
-                value = value,
-                textStyle = TextStyle(
-                    color = Color(0xFFFFFFFF)
-                ),
-                onValueChange = {
-                    value = it
+                    }
                 },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                        onEnter(value)
-                    }
-                ),
-                decorationBox = { innerTextField ->
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        if (value.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                fontSize = 14.sp,
-                                maxLines = 1,
-                                color = Color.Gray,
-                            )
-                        }
-                    }
-                    innerTextField()
+            value = value,
+            textStyle = TextStyle(
+                color = Color(0xFFFFFFFF)
+            ),
+            onValueChange = {
+                value = it
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    onEnter(value)
                 }
-            )
+            ),
+            decorationBox = { innerTextField ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            color = Color.Gray,
+                        )
+                    }
+                }
+                innerTextField()
+            }
+        )
 
-            Image(
-                painter = painterResource(R.drawable.ic_clear_search),
-                contentDescription = "",
-                Modifier.size(size = 20.dp).clickable {
+        Image(
+            painter = painterResource(R.drawable.ic_clear_search),
+            contentDescription = "",
+            Modifier
+                .size(size = 20.dp)
+                .clickable {
                     value = ""
                     keyboardController?.hide()
                     focusManager.clearFocus()
                     onEnter(value)
                 }
-            )
-        }
+        )
+    }
 
 }
 
