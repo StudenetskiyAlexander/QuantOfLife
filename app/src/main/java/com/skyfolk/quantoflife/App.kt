@@ -8,7 +8,6 @@ import com.skyfolk.quantoflife.db.*
 import com.skyfolk.quantoflife.import.ImportInteractor
 import com.skyfolk.quantoflife.ui.now.NowViewModel
 import com.skyfolk.quantoflife.settings.SettingsInteractor
-import com.skyfolk.quantoflife.ui.base.TestViewModel
 import com.skyfolk.quantoflife.ui.onboarding.OnBoardingViewModel
 import com.skyfolk.quantoflife.ui.settings.SettingsViewModel
 import com.skyfolk.quantoflife.ui.feeds.FeedsViewModel
@@ -39,7 +38,6 @@ class App: Application() {
             viewModel { FeedsViewModel(get(), get(), get(), get()) }
             viewModel { StatisticViewModel(get(), get(), get(), get()) }
             viewModel { OnBoardingViewModel(get()) }
-            viewModel { TestViewModel() }
         }
 
         startKoin {

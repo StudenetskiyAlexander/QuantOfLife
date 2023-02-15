@@ -278,6 +278,7 @@ class StatisticViewModel(
                 true -> {
                     result.add(BarEntry((resultCount).toFloat(), totalByPeriod.toFloat()))
                 }
+                else -> {}
             }
 
             resultCount++

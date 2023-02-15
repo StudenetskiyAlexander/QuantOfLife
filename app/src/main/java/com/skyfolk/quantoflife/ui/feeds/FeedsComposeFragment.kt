@@ -57,37 +57,6 @@ class FeedsComposeFragment : Fragment() {
         }
     }
 
-    class ExampleStyle {
-
-        @Composable
-        fun colorState(enabled: Boolean): State<Color> {
-
-            return animateColorAsState(
-                targetValue = if (enabled) Colors.Orange
-                else Colors.Green,
-                tween(4000)
-            )
-        }
-    }
-
-    @Preview
-    @Composable
-    fun Example(style: ExampleStyle = ExampleStyle()) {
-
-        var enabled by remember { mutableStateOf(false) }
-        LaunchedEffect(key1 = Unit, block = {
-
-            repeat(Int.MAX_VALUE) {
-                delay(3000)
-                enabled = enabled.not()
-            }
-        })
-
-        val color by style.colorState(enabled =enabled)
-
-        Box(modifier = Modifier.size(200.dp).background(color = color))
-    }
-
     @ExperimentalComposeUiApi
     override fun onCreateView(
         inflater: LayoutInflater,

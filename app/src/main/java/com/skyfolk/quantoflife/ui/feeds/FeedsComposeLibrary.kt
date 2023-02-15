@@ -3,10 +3,13 @@ package com.skyfolk.quantoflife.ui.feeds
 import android.app.DatePickerDialog
 import android.content.Context
 import android.widget.DatePicker
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,7 +20,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.RelocationRequester
+//import androidx.compose.ui.layout.RelocationRequester
 import androidx.compose.ui.layout.relocationRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -207,11 +210,11 @@ fun DropdownSpinner(content: List<String>, selectedItemIndex: Int, onItemSelect:
     }
 }
 
-@ExperimentalComposeUiApi
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TextSearchField(placeholder: String, initialValue: String, onEnter: (String) -> Unit) {
     var value by rememberSaveable { mutableStateOf(initialValue) }
-    val relocationRequestor = remember { RelocationRequester() }
+    val relocationRequestor = remember { BringIntoViewRequester() }
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -225,7 +228,7 @@ fun TextSearchField(placeholder: String, initialValue: String, onEnter: (String)
             BasicTextField(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .relocationRequester(relocationRequestor)
+                    .bringIntoViewRequester(relocationRequestor)
                     .onFocusChanged {
                         if ("$it" == "Active") {
                             scope.launch {
@@ -398,6 +401,7 @@ fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) 
                                     QuantCategory.Evolution -> {
                                         evolutionBonus += bonus.baseBonus + bonus.bonusForEachRating * event.value
                                     }
+                                    else -> {}
                                 }
                             }
 
