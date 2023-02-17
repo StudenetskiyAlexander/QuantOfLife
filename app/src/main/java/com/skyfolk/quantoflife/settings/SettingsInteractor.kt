@@ -2,25 +2,25 @@ package com.skyfolk.quantoflife.settings
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.core.content.edit
 import com.google.gson.*
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory
 import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.R
+import com.skyfolk.quantoflife.TypedSealedClass
 import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.meansure.Measure
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
 import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
-import java.lang.reflect.Type
 import java.util.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 
 class SettingsInteractor(private val context: Context) {
+
     companion object {
         const val SELECTED_RADIO_IN_STATISTIC = "selected_radio_in_statistic_2"
         const val SELECTED_TIME_START = "selected_time_start"
@@ -39,15 +39,16 @@ class SettingsInteractor(private val context: Context) {
     }
 
     private val preferences = context.getSharedPreferences("qol_preferences", Context.MODE_PRIVATE)
+    private val gson = GsonTypedBuilder.build()
 
     var lastSelectedCalendar: Calendar
         get() {
-            if (Calendar.getInstance().timeInMillis - lastSelectedCalendarWhenSelected.timeInMillis
+            return if (Calendar.getInstance().timeInMillis - lastSelectedCalendarWhenSelected.timeInMillis
                 > PERIOD_WHILE_SELECTED_CALENDAR_MATTERS
             ) {
-                return Calendar.getInstance()
+                Calendar.getInstance()
             } else {
-                return lastSelectedCalendarWhatSelected
+                lastSelectedCalendarWhatSelected
             }
         }
         set(value) {
@@ -58,29 +59,26 @@ class SettingsInteractor(private val context: Context) {
     private var lastSelectedCalendarWhenSelected by preferences.calendar()
     private var lastSelectedCalendarWhatSelected by preferences.calendar()
 
-    var selectedTimeInterval by preferences.timeInterval(
+    var selectedTimeInterval by timeInterval(
         key = { SELECTED_GRAPH_PERIOD },
         defaultValue = TimeInterval.Week
     )
-
-    var selectedGraphQuantFirst by preferences.quantFilter(
-        key = { SELECTED_GRAPH_FIRST_QUANT },
+    var selectedGraphQuantFirst by quantFilter(
         defaultValue = GraphQuantFilterMode.All
-    )
+    ) { SELECTED_GRAPH_FIRST_QUANT }
 
-    var selectedGraphQuantSecond by preferences.quantFilter(
-        key = { SELECTED_GRAPH_SECOND_QUANT },
+    var selectedGraphQuantSecond by quantFilter(
         defaultValue = GraphQuantFilterMode.All
-    )
+    ) { SELECTED_GRAPH_SECOND_QUANT }
 
-    var selectedGraphMeasure by preferences.measure(
+    var selectedGraphMeasure by measure(
         key = { SELECTED_GRAPH_MEASURE },
         defaultValue = Measure.TotalCount
     )
 
-    var selectedYearFilter by preferences.graphSelectedYear()
-    var selectedYearFilter2 by preferences.graphSelectedYear()
-    var selectedGraphMode by preferences.graphSelectedMode()
+    var selectedYearFilter by graphSelectedYear()
+    var selectedYearFilter2 by graphSelectedYear()
+    var selectedGraphMode by graphSelectedMode()
 
     var statisticTimeIntervalSelectedElement by preferences.string(
         key = { SELECTED_RADIO_IN_STATISTIC },
@@ -176,7 +174,7 @@ class SettingsInteractor(private val context: Context) {
             ) = edit().putString(key(property), value).apply()
         }
 
-    fun SharedPreferences.stringOrNull(
+    private fun SharedPreferences.stringOrNull(
         defaultValue: String? = null,
         key: (KProperty<*>) -> String = KProperty<*>::name
     ): ReadWriteProperty<Any, String?> =
@@ -231,172 +229,73 @@ class SettingsInteractor(private val context: Context) {
             ) = edit().putLong(key(property), value.timeInMillis).apply()
         }
 
-    private fun SharedPreferences.measure(
+    private fun measure(
         defaultValue: Measure = Measure.TotalCount,
         key: (KProperty<*>) -> String = KProperty<*>::name
     ): ReadWriteProperty<Any, Measure> =
         object : ReadWriteProperty<Any, Measure> {
-            override fun getValue(
-                thisRef: Any,
-                property: KProperty<*>
-            ): Measure {
-                return when (getString(key(property), defaultValue.toString())
-                    ?: defaultValue.toString()) {
-                    Measure.TotalCount.name -> Measure.TotalCount
-                    Measure.Quantity.name -> Measure.Quantity
-                    Measure.TotalPhysical.name -> Measure.TotalPhysical
-                    Measure.TotalEmotional.name -> Measure.TotalEmotional
-                    Measure.TotalEvolution.name -> Measure.TotalEvolution
-                    Measure.AverageRating.name -> Measure.AverageRating
-                    else -> Measure.TotalCount
-                }
+            override fun getValue(thisRef: Any, property: KProperty<*>): Measure {
+                val stringValue = preferences.getString(key(property), null) ?: return defaultValue
+                return Measure.valueOf(stringValue)
             }
 
-            override fun setValue(
-                thisRef: Any,
-                property: KProperty<*>,
-                value: Measure
-            ) {
-                edit().putString(key(property), value.name).apply()
+            override fun setValue(thisRef: Any, property: KProperty<*>, value: Measure) {
+                preferences.edit {
+                    putString(key(property), value.name)
+                }
             }
         }
 
-    private fun SharedPreferences.graphSelectedMode(
+    private fun graphSelectedMode(
         defaultValue: GraphSelectedMode = GraphSelectedMode.Common,
         key: (KProperty<*>) -> String = KProperty<*>::name
     ): ReadWriteProperty<Any, GraphSelectedMode> =
         object : ReadWriteProperty<Any, GraphSelectedMode> {
-            override fun getValue(
-                thisRef: Any,
-                property: KProperty<*>
-            ): GraphSelectedMode {
-                return when (getString(key(property), defaultValue.toString())
-                    ?: defaultValue.toString()) {
-                    GraphSelectedMode.Common.name -> GraphSelectedMode.Common
-                    GraphSelectedMode.Comparison.name -> GraphSelectedMode.Comparison
-                    GraphSelectedMode.Dependence.name -> GraphSelectedMode.Dependence
-                    else -> GraphSelectedMode.Common
-                }
+            override fun getValue(thisRef: Any, property: KProperty<*>): GraphSelectedMode {
+                val stringValue = preferences.getString(key(property), null) ?: return defaultValue
+                return GraphSelectedMode.valueOf(stringValue)
             }
 
-            override fun setValue(
-                thisRef: Any,
-                property: KProperty<*>,
-                value: GraphSelectedMode
-            ) {
-                edit().putString(key(property), value.name).apply()
+            override fun setValue(thisRef: Any, property: KProperty<*>, value: GraphSelectedMode) {
+                preferences.edit {
+                    putString(key(property), value.name)
+                }
             }
         }
 
-    private fun SharedPreferences.graphSelectedYear(
+    private fun graphSelectedYear(
         defaultValue: GraphSelectedYearMode = GraphSelectedYearMode.All,
         key: (KProperty<*>) -> String = KProperty<*>::name
-    ): ReadWriteProperty<Any, GraphSelectedYearMode> =
-        object : ReadWriteProperty<Any, GraphSelectedYearMode> {
-            override fun getValue(
-                thisRef: Any,
-                property: KProperty<*>
-            ): GraphSelectedYearMode {
-                return when (val value = getString(key(property), defaultValue.toString())
-                    ?: defaultValue.toString()) {
-                    GraphSelectedYearMode.All.toString() -> GraphSelectedYearMode.All
-                    else -> {
-                        if (value.toIntOrNull() != null) {
-                            GraphSelectedYearMode.OnlyYearMode(value.toInt())
-                        } else {
-                            GraphSelectedYearMode.All
-                        }
+    ): ReadWriteSealedProperty<Any, GraphSelectedYearMode> =
+        object : ReadWriteSealedProperty<Any, GraphSelectedYearMode>(
+            gson = gson,
+            sharedPreferences = preferences,
+            classOf = GraphSelectedYearMode::class.java,
+            defaultValue = defaultValue,
+            key = key
+        ) {}
 
-                    }
-                }
-            }
-
-            override fun setValue(
-                thisRef: Any,
-                property: KProperty<*>,
-                value: GraphSelectedYearMode
-            ) {
-                when (value) {
-                    GraphSelectedYearMode.All -> edit().putString(
-                        key(property),
-                        GraphSelectedYearMode.All::class.java.canonicalName
-                    ).apply()
-                    is GraphSelectedYearMode.OnlyYearMode -> edit().putString(
-                        key(property),
-                        value.year.toString()
-                    ).apply()
-                }
-            }
-        }
-
-    fun SharedPreferences.timeInterval(
+    private fun timeInterval(
         defaultValue: TimeInterval = TimeInterval.All,
         key: (KProperty<*>) -> String = KProperty<*>::name
-    ): ReadWriteProperty<Any, TimeInterval> =
-        object : ReadWriteProperty<Any, TimeInterval> {
-            override fun getValue(
-                thisRef: Any,
-                property: KProperty<*>
-            ): TimeInterval {
-                return when (getString(key(property), defaultValue.toString())
-                    ?: defaultValue.toString()) {
-                    TimeInterval.Today::class.java.canonicalName -> TimeInterval.Today
-                    TimeInterval.Year::class.java.canonicalName -> TimeInterval.Year
-                    TimeInterval.Week::class.java.canonicalName -> TimeInterval.Week
-                    else -> TimeInterval.Month
-                }
-            }
+    ): ReadWriteSealedProperty<Any, TimeInterval> =
+        object : ReadWriteSealedProperty<Any, TimeInterval>(
+            gson = gson,
+            sharedPreferences = preferences,
+            classOf = TimeInterval::class.java,
+            defaultValue = defaultValue,
+            key = key
+        ) {}
 
-            override fun setValue(
-                thisRef: Any,
-                property: KProperty<*>,
-                value: TimeInterval
-            ) {
-                edit().putString(
-                    key(property), when (value) {
-                        is TimeInterval.Today -> TimeInterval.Today::class.java.canonicalName
-                        is TimeInterval.Year -> TimeInterval.Year::class.java.canonicalName
-                        is TimeInterval.Week -> TimeInterval.Week::class.java.canonicalName
-                        else -> TimeInterval.Month::class.java.canonicalName
-                    }
-                ).apply()
-            }
-        }
-
-
-    private val graphQuantFilterModeTypeAdapter = RuntimeTypeAdapterFactory.of(GraphQuantFilterMode::class.java, "type")
-        .registerSubtype(GraphQuantFilterMode.All::class.java)
-        .registerSubtype(GraphQuantFilterMode.OnlySelected::class.java, GraphQuantFilterMode.OnlySelected::class.java.name)
-
-    private val quantTypeAdapter = RuntimeTypeAdapterFactory.of(QuantBase::class.java)
-        .registerSubtype(QuantBase.QuantRated::class.java)
-        .registerSubtype(QuantBase.QuantMeasure::class.java)
-        .registerSubtype(QuantBase.QuantNote::class.java)
-
-    private val gson = GsonBuilder()
-        .registerTypeAdapterFactory(graphQuantFilterModeTypeAdapter)
-        .registerTypeAdapterFactory(quantTypeAdapter)
-        .create()
-
-    private fun SharedPreferences.quantFilter(
+    private fun quantFilter(
         defaultValue: GraphQuantFilterMode = GraphQuantFilterMode.All,
         key: (KProperty<*>) -> String = KProperty<*>::name
-    ): ReadWriteProperty<Any, GraphQuantFilterMode> =
-        object : ReadWriteProperty<Any, GraphQuantFilterMode> {
-            override fun getValue(
-                thisRef: Any,
-                property: KProperty<*>
-            ): GraphQuantFilterMode {
-                val jsonValue = getString(key(property), null) ?: return defaultValue
-                return gson.fromJson(jsonValue, GraphQuantFilterMode::class.java)
-            }
-
-            override fun setValue(
-                thisRef: Any,
-                property: KProperty<*>,
-                value: GraphQuantFilterMode
-            ) = edit {
-                putString(key(property), gson.toJson(value))
-            }
-        }
+    ): ReadWriteSealedProperty<Any, GraphQuantFilterMode> =
+        object : ReadWriteSealedProperty<Any, GraphQuantFilterMode>(
+            gson = gson,
+            sharedPreferences = preferences,
+            classOf = GraphQuantFilterMode::class.java,
+            defaultValue = defaultValue,
+            key = key
+        ) {}
 }

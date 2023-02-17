@@ -1,11 +1,11 @@
 package com.skyfolk.quantoflife.ui.entity
 
-import android.util.Log
+import com.skyfolk.quantoflife.TypedSealedClass
 import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.ui.adapter.SpinnerSelectableItem
 
-sealed class GraphQuantFilterMode : SpinnerSelectableItem {
-    val type = this.javaClass.name
+sealed class GraphQuantFilterMode : SpinnerSelectableItem, TypedSealedClass {
+    override val type = this.javaClass.name
 
     object All : GraphQuantFilterMode()
 

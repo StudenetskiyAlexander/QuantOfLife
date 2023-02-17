@@ -1,9 +1,12 @@
 package com.skyfolk.quantoflife.timeInterval
 
+import com.skyfolk.quantoflife.TypedSealedClass
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import java.util.*
 
-sealed class TimeInterval {
+sealed class TimeInterval: TypedSealedClass {
+    override val type = this.javaClass.name
+
     object Today : TimeInterval()
     object Week : TimeInterval()
     object Month : TimeInterval()
