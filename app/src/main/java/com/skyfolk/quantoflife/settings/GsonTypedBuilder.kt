@@ -3,26 +3,24 @@ package com.skyfolk.quantoflife.settings
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory
-import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.entity.QuantBase
-import com.skyfolk.quantoflife.meansure.Measure
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
-import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 
 class GsonTypedBuilder {
 
     companion object {
 
-        private val graphQuantFilterModeTypeAdapter =
-            RuntimeTypeAdapterFactory.of(GraphQuantFilterMode::class.java, "type")
+        private val quantFilterModeTypeAdapter =
+            RuntimeTypeAdapterFactory.of(QuantFilterMode::class.java, "type")
                 .registerSubtype(
-                    GraphQuantFilterMode.All::class.java,
-                    GraphQuantFilterMode.All::class.java.name
+                    QuantFilterMode.All::class.java,
+                    QuantFilterMode.All::class.java.name
                 )
                 .registerSubtype(
-                    GraphQuantFilterMode.OnlySelected::class.java,
-                    GraphQuantFilterMode.OnlySelected::class.java.name
+                    QuantFilterMode.OnlySelected::class.java,
+                    QuantFilterMode.OnlySelected::class.java.name
                 )
 
         private val quantTypeAdapter = RuntimeTypeAdapterFactory.of(QuantBase::class.java)
@@ -53,7 +51,7 @@ class GsonTypedBuilder {
                 )
 
         fun build(): Gson = GsonBuilder()
-            .registerTypeAdapterFactory(graphQuantFilterModeTypeAdapter)
+            .registerTypeAdapterFactory(quantFilterModeTypeAdapter)
             .registerTypeAdapterFactory(quantTypeAdapter)
             .registerTypeAdapterFactory(timeIntervalTypeAdapter)
             .registerTypeAdapterFactory(graphSelectedYearModeAdapter)

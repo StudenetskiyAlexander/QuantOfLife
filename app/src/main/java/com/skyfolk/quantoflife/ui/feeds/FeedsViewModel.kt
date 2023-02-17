@@ -15,6 +15,7 @@ import com.skyfolk.quantoflife.feeds.getStarTotal
 import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.EventsListLoading.Companion.updateStateToLoading
 import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.LoadingEventsListCompleted.Companion.updateStateToCompleted
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
@@ -36,12 +37,8 @@ class FeedsViewModel(
     private val _state = MutableStateFlow<FeedsFragmentState>(
         FeedsFragmentState.EventsListLoading(
             listOfQuants = quantsStorageInteractor.getAllQuantsList(false),
-            selectedTimeInterval = TimeInterval.toTimeInterval(
-                settingsInteractor.statisticTimeIntervalSelectedElement,
-                settingsInteractor.statisticTimeStart,
-                settingsInteractor.statisticTimeEnd
-            ),
-            selectedEventFilter = getQuantNameById(settingsInteractor.selectedEventFiler),
+            selectedTimeInterval = settingsInteractor.statisticTimeIntervalSelectedElement,
+            selectedEventFilter = settingsInteractor.feedsQuantFilterMode,
             selectedTextFilter = settingsInteractor.statisticSearchText,
             quantCategoryNames = settingsInteractor.getCategoryNames()
         )
@@ -51,88 +48,81 @@ class FeedsViewModel(
     private val _singleLifeEvent = SingleLiveEvent<FeedsFragmentSingleLifeEvent>()
     val singleLifeEvent: LiveData<FeedsFragmentSingleLifeEvent> get() = _singleLifeEvent
 
-    private fun runSearch(
-        timeIntervalWasChanged: TimeIntervalWasChanged? = null,
-        eventFilterWasChanged: EventFilterWasChanged? = null
-    ) {
+    private fun runSearch() {
         Log.d("skyfolk-timer", "runSearchStart: ${System.currentTimeMillis()}")
 
         viewModelScope.launch {
-            val selectedTimeInterval =
-                timeIntervalWasChanged?.timeInterval ?: _state.value.selectedTimeInterval
-            selectedTimeInterval.let { interval ->
-                updateStateToLoading(_state)
+            val selectedTimeInterval = _state.value.selectedTimeInterval
+            val selectedEventFilter = _state.value.selectedEventFilter
 
-                val searchText = settingsInteractor.statisticSearchText
+            updateStateToLoading(_state)
 
-                val startDate =
-                    dateTimeRepository.getCalendar().getStartDateCalendar(
-                        interval,
-                        settingsInteractor.startDayTime
-                    ).timeInMillis
-                val endDate =
-                    dateTimeRepository.getCalendar().getEndDateCalendar(
-                        interval,
-                        settingsInteractor.startDayTime
-                    ).timeInMillis
+            val searchText = settingsInteractor.statisticSearchText
 
-                var listOfEvents = ArrayList(
-                    eventsStorageInteractor.getAllEvents()
-                        .filter { it.date in startDate until endDate }
-                        .filter {
-                                    it.note.contains(searchText, ignoreCase = true)
-                        })
+            val startDate =
+                dateTimeRepository.getCalendar().getStartDateCalendar(
+                    selectedTimeInterval,
+                    settingsInteractor.startDayTime
+                ).timeInMillis
+            val endDate =
+                dateTimeRepository.getCalendar().getEndDateCalendar(
+                    selectedTimeInterval,
+                    settingsInteractor.startDayTime
+                ).timeInMillis
 
-                val selectedEventFilter =
-                    if (eventFilterWasChanged != null) eventFilterWasChanged.eventFilter else
-                        getQuantIdByName(_state.value.selectedEventFilter)
-                selectedEventFilter?.let { filter ->
-                    listOfEvents = ArrayList(listOfEvents.filter { it.quantId == filter })
+            var listOfEvents = eventsStorageInteractor.getAllEvents()
+                .filter { it.date in startDate until endDate }
+                .filter {
+                    it.note.contains(searchText, ignoreCase = true)
                 }
 
-                Log.d("skyfolk-timer", "runSearchEnd: ${System.currentTimeMillis()}")
-
-                val allQuantsFound = quantsStorageInteractor.getAllQuantsList(false)
-
-                val totalPhysicalFound = getTotal(
-                    allQuantsFound,
-                    listOfEvents,
-                    QuantCategory.Physical
-                )
-
-                val totalEmotionalFound = getTotal(
-                    allQuantsFound,
-                    listOfEvents,
-                    QuantCategory.Emotion
-                )
-
-                val totalEvolutionFound = getTotal(
-                    allQuantsFound,
-                    listOfEvents,
-                    QuantCategory.Evolution
-                )
-
-                val totalFound = getTotal(allQuantsFound, listOfEvents)
-                val starFound = getStarTotal(allQuantsFound, listOfEvents)
-
-                Log.d("skyfolk-timer", "runSearchValuesEnd: ${System.currentTimeMillis()}")
-
-                updateStateToCompleted(
-                    _state,
-                    _timeInterval = interval,
-                    _selectedEventFilter = getQuantNameById(selectedEventFilter),
-                    _selectedTextFilter = searchText,
-                    _quantCategoryName = settingsInteractor.getCategoryNames(),
-                    _listOfEvents = listOfEvents.toDisplayableEvents(allQuantsFound),
-                    _totalPhysicalFound = totalPhysicalFound,
-                    _totalEmotionalFound = totalEmotionalFound,
-                    _totalEvolutionFound = totalEvolutionFound,
-                    _totalFound = totalFound,
-                    _totalStarFound = starFound
-                )
-
-                Log.d("skyfolk-timer", "runSearchUpdateStateEnd: ${System.currentTimeMillis()}")
+            selectedEventFilter.let { filter ->
+                listOfEvents = when (filter) {
+                    QuantFilterMode.All -> listOfEvents
+                    is QuantFilterMode.OnlySelected -> listOfEvents.filter { it.quantId == filter.quant.id }
+                }
             }
+
+            Log.d("skyfolk-timer", "runSearchEnd: ${System.currentTimeMillis()}")
+
+            val allQuantsFound = quantsStorageInteractor.getAllQuantsList(false)
+
+            val totalPhysicalFound = getTotal(
+                allQuantsFound,
+                listOfEvents,
+                QuantCategory.Physical
+            )
+
+            val totalEmotionalFound = getTotal(
+                allQuantsFound,
+                listOfEvents,
+                QuantCategory.Emotion
+            )
+
+            val totalEvolutionFound = getTotal(
+                allQuantsFound,
+                listOfEvents,
+                QuantCategory.Evolution
+            )
+
+            val totalFound = getTotal(allQuantsFound, listOfEvents)
+            val starFound = getStarTotal(allQuantsFound, listOfEvents)
+
+            updateStateToCompleted(
+                _state,
+                _timeInterval = selectedTimeInterval,
+                _selectedEventFilter = selectedEventFilter,
+                _selectedTextFilter = searchText,
+                _quantCategoryName = settingsInteractor.getCategoryNames(),
+                _listOfEvents = listOfEvents.mapNotNull { it.toDisplayableEvents(allQuantsFound) },
+                _totalPhysicalFound = totalPhysicalFound,
+                _totalEmotionalFound = totalEmotionalFound,
+                _totalEvolutionFound = totalEvolutionFound,
+                _totalFound = totalFound,
+                _totalStarFound = starFound
+            )
+
+            Log.d("skyfolk-timer", "runSearchUpdateStateEnd: ${System.currentTimeMillis()}")
         }
     }
 
@@ -141,13 +131,13 @@ class FeedsViewModel(
     }
 
     fun setTimeIntervalState(timeInterval: TimeInterval) {
-        settingsInteractor.statisticTimeIntervalSelectedElement = timeInterval.javaClass.name
+        settingsInteractor.statisticTimeIntervalSelectedElement = timeInterval
         if (timeInterval is TimeInterval.Selected) {
             settingsInteractor.statisticTimeStart = timeInterval.start
             settingsInteractor.statisticTimeEnd = timeInterval.end
         }
 
-        runSearch(timeIntervalWasChanged = TimeIntervalWasChanged(timeInterval))
+        runSearch()
     }
 
     fun setSearchText(searchText: String) {
@@ -156,13 +146,9 @@ class FeedsViewModel(
         runSearch()
     }
 
-    fun setSelectedEventFilter(itemName: String?, valueNotChange: Boolean = false) {
-        if (valueNotChange) {
-            runSearch(eventFilterWasChanged = EventFilterWasChanged(settingsInteractor.selectedEventFiler))
-        } else {
-            settingsInteractor.selectedEventFiler = getQuantIdByName(itemName)
-            runSearch(eventFilterWasChanged = EventFilterWasChanged(getQuantIdByName(itemName)))
-        }
+    fun setSelectedQuantFilterMode(mode: QuantFilterMode) {
+        settingsInteractor.feedsQuantFilterMode = mode
+        runSearch()
     }
 
     fun editEvent(eventId: String) {
@@ -202,34 +188,28 @@ class FeedsViewModel(
     private data class EventFilterWasChanged(val eventFilter: String?)
 }
 
-fun ArrayList<EventBase>.toDisplayableEvents(quants: List<QuantBase>): ArrayList<EventDisplayable> {
-    val result = arrayListOf<EventDisplayable>()
+fun EventBase.toDisplayableEvents(quants: List<QuantBase>): EventDisplayable? {
 
-    for (event in this) {
-        quants.firstOrNull { it.id == event.quantId }?.let {
-            val value = when {
-                (event is EventBase.EventRated) -> event.rate
-                (event is EventBase.EventMeasure) -> event.value
-                else -> null
-            }
-
-            val bonuses = if (it is QuantBase.QuantRated) it.bonuses else null
-            result.add(
-                EventDisplayable(
-                    id = event.id,
-                    name = it.name,
-                    quantId = event.quantId,
-                    icon = it.icon,
-                    date = event.date,
-                    note = event.note,
-                    value = value,
-                    bonuses = bonuses
-                )
-            )
+    quants.firstOrNull { it.id == this.quantId }?.let {
+        val value = when {
+            (this is EventBase.EventRated) -> this.rate
+            (this is EventBase.EventMeasure) -> this.value
+            else -> null
         }
-    }
 
-    return result
+        val bonuses = if (it is QuantBase.QuantRated) it.bonuses else null
+        return EventDisplayable(
+            id = this.id,
+            name = it.name,
+            quantId = this.quantId,
+            icon = it.icon,
+            date = this.date,
+            note = this.note,
+            value = value,
+            bonuses = bonuses
+        )
+    }
+    return null
 }
 
 

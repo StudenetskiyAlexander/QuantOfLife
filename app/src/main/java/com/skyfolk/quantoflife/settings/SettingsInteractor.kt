@@ -1,23 +1,15 @@
 package com.skyfolk.quantoflife.settings
 
 import android.content.Context
-import android.content.SharedPreferences
-import androidx.core.content.edit
-import com.google.gson.*
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory
 import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.R
-import com.skyfolk.quantoflife.TypedSealedClass
-import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.meansure.Measure
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
-import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 import com.skyfolk.quantoflife.utils.*
 import java.util.*
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 
 
 class SettingsInteractor(private val context: Context) {
@@ -50,17 +42,18 @@ class SettingsInteractor(private val context: Context) {
     private var lastSelectedCalendarWhatSelected by preferences.calendar()
 
     var selectedTimeInterval by preferences.timeInterval(gson, TimeInterval.Week)
-    var selectedGraphQuantFirst by preferences.quantFilter(gson, GraphQuantFilterMode.All)
-    var selectedGraphQuantSecond by preferences.quantFilter(gson, GraphQuantFilterMode.All)
+    var selectedGraphQuantFirst by preferences.quantFilter(gson, QuantFilterMode.All)
+    var selectedGraphQuantSecond by preferences.quantFilter(gson, QuantFilterMode.All)
     var selectedGraphMeasure by preferences.measure(Measure.TotalCount)
     var selectedYearFilter by preferences.graphSelectedYear(gson, GraphSelectedYearMode.All)
     var selectedYearFilter2 by preferences.graphSelectedYear(gson, GraphSelectedYearMode.All)
     var selectedGraphMode by preferences.graphSelectedMode(GraphSelectedMode.Common)
-    var statisticTimeIntervalSelectedElement by preferences.string( "All") //TODO
+    var statisticTimeIntervalSelectedElement by preferences.timeInterval(gson, TimeInterval.All)
     var statisticSearchText by preferences.string("")
     var statisticTimeStart by preferences.long(0)
     var statisticTimeEnd by preferences.long(0)
-    var selectedEventFiler by preferences.stringOrNull(null)
+
+    var feedsQuantFilterMode by preferences.quantFilter(gson, QuantFilterMode.All)
     var isOnboardingComplete by preferences.boolean(true)
     var startDayTime by preferences.long(0)
 

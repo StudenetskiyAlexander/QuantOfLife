@@ -4,20 +4,21 @@ import com.skyfolk.quantoflife.entity.EventDisplayable
 import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 sealed class FeedsFragmentState(
     open val listOfQuants: List<QuantBase>,
     open val selectedTimeInterval: TimeInterval,
-    open val selectedEventFilter: String?,
+    open val selectedEventFilter: QuantFilterMode,
     open val selectedTextFilter: String,
     open val quantCategoryNames: List<Pair<QuantCategory, String>>
 ) {
     data class EventsListLoading(
         override val listOfQuants: List<QuantBase>,
         override val selectedTimeInterval: TimeInterval,
-        override val selectedEventFilter: String?,
+        override val selectedEventFilter: QuantFilterMode,
         override val selectedTextFilter: String,
         override val quantCategoryNames: List<Pair<QuantCategory, String>>
     ) : FeedsFragmentState(
@@ -45,7 +46,7 @@ sealed class FeedsFragmentState(
     data class LoadingEventsListCompleted(
         override val listOfQuants: List<QuantBase>,
         override val selectedTimeInterval: TimeInterval,
-        override val selectedEventFilter: String?,
+        override val selectedEventFilter: QuantFilterMode,
         override val selectedTextFilter: String,
         override val quantCategoryNames: List<Pair<QuantCategory, String>>,
         val listOfEvents: List<EventDisplayable>,
@@ -65,10 +66,10 @@ sealed class FeedsFragmentState(
             fun updateStateToCompleted(
                 state: MutableStateFlow<FeedsFragmentState>,
                 _timeInterval: TimeInterval,
-                _selectedEventFilter: String?,
+                _selectedEventFilter: QuantFilterMode,
                 _selectedTextFilter: String,
                 _quantCategoryName: ArrayList<Pair<QuantCategory, String>>,
-                _listOfEvents: ArrayList<EventDisplayable>,
+                _listOfEvents: List<EventDisplayable>,
                 _totalPhysicalFound: Double,
                 _totalEmotionalFound: Double,
                 _totalEvolutionFound: Double,

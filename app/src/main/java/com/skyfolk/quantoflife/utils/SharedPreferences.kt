@@ -7,7 +7,7 @@ import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.meansure.Measure
 import com.skyfolk.quantoflife.settings.ReadWriteSealedProperty
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
-import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 import java.util.*
 import kotlin.properties.ReadWriteProperty
@@ -164,13 +164,13 @@ fun SharedPreferences.timeInterval(
 
 fun SharedPreferences.quantFilter(
     gson: Gson,
-    defaultValue: GraphQuantFilterMode,
+    defaultValue: QuantFilterMode,
     key: (KProperty<*>) -> String = KProperty<*>::name
-): ReadWriteSealedProperty<Any, GraphQuantFilterMode> =
-    object : ReadWriteSealedProperty<Any, GraphQuantFilterMode>(
+): ReadWriteSealedProperty<Any, QuantFilterMode> =
+    object : ReadWriteSealedProperty<Any, QuantFilterMode>(
         gson = gson,
         sharedPreferences = this,
-        classOf = GraphQuantFilterMode::class.java,
+        classOf = QuantFilterMode::class.java,
         defaultValue = defaultValue,
         key = key
     ) {}

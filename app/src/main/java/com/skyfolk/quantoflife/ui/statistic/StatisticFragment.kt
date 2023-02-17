@@ -21,8 +21,8 @@ import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.databinding.StatisticFragmentBinding
 import com.skyfolk.quantoflife.meansure.fromPositionToMeasure
 import com.skyfolk.quantoflife.ui.adapter.GraphSelectedYearModeAdapter
-import com.skyfolk.quantoflife.ui.adapter.QuantSelectedModeAdapter
-import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
+import com.skyfolk.quantoflife.ui.adapter.QuantFilterModeAdapter
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 import com.skyfolk.quantoflife.ui.theme.Colors
 import com.skyfolk.quantoflife.ui.theme.toInt
@@ -169,17 +169,17 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
 
         viewModel.selectedFilter.observe(viewLifecycleOwner) { filter: SelectedGraphFilter? ->
             filter?.let { it: SelectedGraphFilter ->
-                val listOfQuantFilterModes: MutableList<GraphQuantFilterMode> =
-                    it.listOfQuants.map { GraphQuantFilterMode.OnlySelected(it) }.toMutableList()
-                listOfQuantFilterModes.add(0, GraphQuantFilterMode.All)
-                val quantsSpinnerAdapter = QuantSelectedModeAdapter(
+                val listOfQuantFilterModes: MutableList<QuantFilterMode> =
+                    it.listOfQuants.map { QuantFilterMode.OnlySelected(it) }.toMutableList()
+                listOfQuantFilterModes.add(0, QuantFilterMode.All)
+                val quantsSpinnerAdapter = QuantFilterModeAdapter(
                     requireContext(),
                     listOfQuantFilterModes
                 )
                 binding.eventSpinner.adapter = quantsSpinnerAdapter
                 binding.eventSpinner2.adapter = quantsSpinnerAdapter
 
-                Log.d("skyfolk-prefs", "onCreateView: ${(it.filter as? GraphQuantFilterMode.OnlySelected)?.quant?.name}")
+                Log.d("skyfolk-prefs", "onCreateView: ${(it.filter as? QuantFilterMode.OnlySelected)?.quant?.name}")
 
                 binding.modeSpinner.setSelection(it.selectedMode.toPosition(), false)
                 binding.meansureSpinner.setSelection(it.measure.toPosition(), false)
@@ -346,12 +346,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    val newSelectedYearName = when (position) {
-                        0 -> GraphSelectedYearMode.All
-                        else -> GraphSelectedYearMode.OnlyYearMode(
-                            parent.getItemAtPosition(position).toString().toInt()
-                        )
-                    }
+                    val newSelectedYearName = parent.getItemAtPosition(position) as GraphSelectedYearMode
                     viewModel.setYearFilter2(filter = newSelectedYearName)
                     isSelectionFromTouch = false
                 }
@@ -370,7 +365,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    val newMode = parent.getItemAtPosition(position) as GraphQuantFilterMode
+                    val newMode = parent.getItemAtPosition(position) as QuantFilterMode
                     viewModel.setEventFilter(1, filter = newMode)
                     isSelectionFromTouch = false
                 }
@@ -389,7 +384,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    val newMode = parent.getItemAtPosition(position) as GraphQuantFilterMode
+                    val newMode = parent.getItemAtPosition(position) as QuantFilterMode
                     viewModel.setEventFilter(2, filter = newMode)
                     isSelectionFromTouch = false
                 }

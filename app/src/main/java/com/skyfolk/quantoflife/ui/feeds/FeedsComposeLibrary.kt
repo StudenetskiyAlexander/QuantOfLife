@@ -2,6 +2,7 @@ package com.skyfolk.quantoflife.ui.feeds
 
 import android.app.DatePickerDialog
 import android.content.Context
+import android.util.Log
 import android.widget.DatePicker
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -21,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 //import androidx.compose.ui.layout.RelocationRequester
-import androidx.compose.ui.layout.relocationRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -38,9 +38,11 @@ import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.entity.EventDisplayable
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.theme.Colors.Orange
 import com.skyfolk.quantoflife.ui.theme.Typography
 import com.skyfolk.quantoflife.utils.format
+import com.skyfolk.quantoflife.utils.timeInMillis
 import com.skyfolk.quantoflife.utils.toDate
 import com.skyfolk.quantoflife.utils.toDateWithoutHourAndMinutes
 import kotlinx.coroutines.delay
@@ -166,9 +168,14 @@ fun TimeSelectLayout(
 }
 
 @Composable
-fun DropdownSpinner(content: List<String>, selectedItemIndex: Int, onItemSelect: (Int) -> Unit) {
+fun <T> DropdownSpinner(
+    contentMapper: (T) -> String,
+    content: List<T>,
+    selectedItem: T,
+    onItemSelect: (T) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedIndex by remember { mutableStateOf(selectedItemIndex) }
+    var selectedIndex by remember { mutableStateOf(content.indexOf(selectedItem)) }
 
     Box(
         modifier = Modifier
@@ -182,7 +189,7 @@ fun DropdownSpinner(content: List<String>, selectedItemIndex: Int, onItemSelect:
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = content[selectedIndex]
+                text = contentMapper.invoke(selectedItem)
             )
             Image(
                 painter = painterResource(R.drawable.ic_dropdown),
@@ -201,9 +208,9 @@ fun DropdownSpinner(content: List<String>, selectedItemIndex: Int, onItemSelect:
                 DropdownMenuItem(onClick = {
                     selectedIndex = index
                     expanded = false
-                    onItemSelect(index)
+                    onItemSelect(s)
                 }) {
-                    Text(text = content[index])
+                    Text(text = contentMapper.invoke(s))
                 }
             }
         }
@@ -284,16 +291,34 @@ fun TextSearchField(placeholder: String, initialValue: String, onEnter: (String)
 
 }
 
+class QuantFilterToContentMapper : (QuantFilterMode) -> String {
+    override fun invoke(quantFilterMode: QuantFilterMode): String = when (quantFilterMode) {
+        QuantFilterMode.All -> "Все события"
+        is QuantFilterMode.OnlySelected -> quantFilterMode.quant.name
+    }
+}
+
+class TimeIntervalToContentMapper : (TimeInterval) -> String {
+    override fun invoke(timeInterval: TimeInterval): String = when (timeInterval) {
+        TimeInterval.All -> "Все время"
+        TimeInterval.Month -> "Месяц"
+        is TimeInterval.Selected -> "Выбранный интервал"
+        TimeInterval.Today -> "Сегодня"
+        TimeInterval.Week -> "Неделя"
+        TimeInterval.Year -> "Год"
+    }
+}
+
 @ExperimentalComposeUiApi
 @Composable
 fun FilterBlock(
-    listOfQuantNames: List<String>,
-    selectedQuantPosition: Int?,
-    onQuantFilterClick: (Int) -> Unit,
-    listOfTimeInterval: List<String>,
-    selectedTimeIntervalPosition: Int,
+    listOfQuantFilterModes: List<QuantFilterMode>,
+    selectedQuantFilterMode: QuantFilterMode,
+    onSelectQuantFilterMode: (QuantFilterMode) -> Unit,
+    listOfTimeInterval: List<TimeInterval>,
+    selectedTimeInterval: TimeInterval,
     selectedTextFilter: String,
-    onTimeIntervalFilterClick: (Int) -> Unit,
+    onSelectTimeInterval: (TimeInterval) -> Unit,
     onTextSearchEnter: (String) -> Unit,
     modifier: Modifier
 ) {
@@ -315,18 +340,28 @@ fun FilterBlock(
             )
 
             DropdownSpinner(
-                content = listOfQuantNames,
-                selectedItemIndex = selectedQuantPosition ?: 0
+                contentMapper = QuantFilterToContentMapper(),
+                content = listOfQuantFilterModes,
+                selectedItem = selectedQuantFilterMode
             ) {
-                onQuantFilterClick(it)
+                onSelectQuantFilterMode(it)
             }
             DropdownSpinner(
+                contentMapper = TimeIntervalToContentMapper(),
                 content = listOfTimeInterval,
-                selectedItemIndex = selectedTimeIntervalPosition
+                selectedItem = selectedTimeInterval
             ) {
-                onTimeIntervalFilterClick(it)
+                onSelectTimeInterval(it)
             }
             SeparatorLine()
+
+            if (selectedTimeInterval is TimeInterval.Selected) {
+                SelectedTimeInterval(
+                    LocalContext.current,
+                    Calendar.getInstance().timeInMillis(selectedTimeInterval.start),
+                    Calendar.getInstance().timeInMillis(selectedTimeInterval.end)
+                ) { onSelectTimeInterval(it) }
+            }
         }
     }
 }
@@ -461,10 +496,9 @@ fun EventsList(modifier: Modifier, events: List<EventDisplayable>, onItemClick: 
 @Composable
 fun SelectedTimeInterval(
     context: Context,
-    setTimeInterval: (TimeInterval.Selected) -> Unit,
     intervalStart: Calendar,
     intervalEnd: Calendar,
-    modifier: Modifier = Modifier
+    setTimeInterval: (TimeInterval.Selected) -> Unit,
 ) {
     val dayInMillis = 24 * 60 * 60 * 1000
 

@@ -228,11 +228,11 @@
                 android:text="Фильтр : "
                 android:textAlignment="center"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toTopOf="@id/spinner"
+                app:layout_constraintBottom_toTopOf="@id/quant_filter_mode_spinner"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <Spinner
-                android:id="@+id/spinner"
+                android:id="@+id/quant_filter_mode_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
