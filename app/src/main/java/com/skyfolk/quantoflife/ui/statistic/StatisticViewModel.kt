@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.BarEntry
 import com.skyfolk.quantoflife.GraphSelectedMode
-import com.skyfolk.quantoflife.GraphSelectedYear
+import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
 import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
@@ -18,7 +18,7 @@ import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.feeds.getTotalAverageStar
 import com.skyfolk.quantoflife.feeds.getTotalCount
 import com.skyfolk.quantoflife.meansure.Measure
-import com.skyfolk.quantoflife.meansure.QuantFilter
+import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
 import com.skyfolk.quantoflife.utils.getEndDateCalendar
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.statistic.IntervalAxisValueFormatter
@@ -29,6 +29,8 @@ import java.lang.Integer.max
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.min
+
+private const val MINIMUM_QUANT_USAGE_TO_SELECT = 0
 
 class StatisticViewModel(
     private val eventsStorageInteractor: EventsStorageInteractor,
@@ -55,7 +57,7 @@ class StatisticViewModel(
             filter2 = settingsInteractor.selectedGraphQuantSecond,
             listOfQuants = quantsStorageInteractor.getAllQuantsList(false)
                 .filterIsInstance<QuantBase.QuantRated>()
-                .filter { it.usageCount > 9 },
+                .filter { it.usageCount > MINIMUM_QUANT_USAGE_TO_SELECT },
             listOfYears = eventsStorageInteractor.getAllEventsYears(settingsInteractor.startDayTime)
         )
     }
@@ -81,7 +83,7 @@ class StatisticViewModel(
             }
     }
 
-    fun setEventFilter(position: Int, filter: QuantFilter) {
+    fun setEventFilter(position: Int, filter: GraphQuantFilterMode) {
         when (position) {
             1 -> {
                 settingsInteractor.selectedGraphQuantFirst = filter
@@ -99,12 +101,12 @@ class StatisticViewModel(
         _selectedFilter.value = _selectedFilter.value?.copy(selectedMode = mode)
     }
 
-    fun setYearFilter(filter: GraphSelectedYear) {
+    fun setYearFilter(filter: GraphSelectedYearMode) {
         settingsInteractor.selectedYearFilter = filter
         _selectedFilter.value = _selectedFilter.value?.copy(selectedYear = filter)
     }
 
-    fun setYearFilter2(filter: GraphSelectedYear) {
+    fun setYearFilter2(filter: GraphSelectedYearMode) {
         settingsInteractor.selectedYearFilter2 = filter
         _selectedFilter.value = _selectedFilter.value?.copy(selectedYear2 = filter)
     }
@@ -120,10 +122,10 @@ class StatisticViewModel(
     }
 
     private fun getEntries(
-        selectedYear: GraphSelectedYear,
+        selectedYear: GraphSelectedYearMode,
         allEvents: List<EventBase>,
         allQuants: List<QuantBase>,
-        quantFilter: QuantFilter?,
+        graphQuantFilterMode: GraphQuantFilterMode?,
         startDayTime: Long,
         timeInterval: TimeInterval = TimeInterval.Week,
         measure: Measure
@@ -132,9 +134,10 @@ class StatisticViewModel(
         val result = ArrayList<BarEntry>()
         var resultCount = 0
 
+        // TODO Mapper GraphSelectedYearToTimeMapper
         var lastDate = when (selectedYear) {
-            GraphSelectedYear.All -> dateTimeRepository.getTimeInMillis()
-            is GraphSelectedYear.OnlyYear -> {
+            GraphSelectedYearMode.All -> dateTimeRepository.getTimeInMillis()
+            is GraphSelectedYearMode.OnlyYearMode -> {
                 val calendar = dateTimeRepository.getCalendar()
                 calendar[Calendar.YEAR] = selectedYear.year
                 calendar
@@ -145,8 +148,8 @@ class StatisticViewModel(
         lastDate = min(lastDate, dateTimeRepository.getTimeInMillis())
 
         val firstDate = when (selectedYear) {
-            GraphSelectedYear.All -> if (allEvents.isNotEmpty()) allEvents.first().date else lastDate
-            is GraphSelectedYear.OnlyYear -> {
+            GraphSelectedYearMode.All -> if (allEvents.isNotEmpty()) allEvents.first().date else lastDate
+            is GraphSelectedYearMode.OnlyYearMode -> {
                 val calendar = dateTimeRepository.getCalendar()
                 calendar[Calendar.YEAR] = selectedYear.year
                 calendar
@@ -156,9 +159,9 @@ class StatisticViewModel(
         }
 
         val allFilteredEvents = allEvents.filter {
-            when (quantFilter) {
-                QuantFilter.All -> true
-                is QuantFilter.OnlySelected -> it.quantId == getQuantIdByName(quantFilter.selectQuant)
+            when (graphQuantFilterMode) {
+                GraphQuantFilterMode.All -> true
+                is GraphQuantFilterMode.OnlySelected -> it.quantId == graphQuantFilterMode.quant.id
                 else -> true
             }
         }
@@ -285,9 +288,9 @@ class StatisticViewModel(
             currentPeriodStart = currentPeriodEnd + 1
         }
 
-        val name = when (quantFilter) {
-            QuantFilter.All -> "Все события"
-            is QuantFilter.OnlySelected -> quantFilter.selectQuant
+        val name = when (graphQuantFilterMode) {
+            GraphQuantFilterMode.All -> "Все события"
+            is GraphQuantFilterMode.OnlySelected -> graphQuantFilterMode.quant.name
             else -> "Все события"
         }
 
@@ -314,8 +317,8 @@ class StatisticViewModel(
         val onlyQuant2 = _selectedFilter.value?.filter2
         val timeInterval = _selectedFilter.value?.timeInterval ?: TimeInterval.Week
         val measure = _selectedFilter.value?.measure ?: Measure.TotalCount
-        val selectedYear = _selectedFilter.value?.selectedYear ?: GraphSelectedYear.All
-        val selectedYear2 = _selectedFilter.value?.selectedYear2 ?: GraphSelectedYear.All
+        val selectedYear = _selectedFilter.value?.selectedYear ?: GraphSelectedYearMode.All
+        val selectedYear2 = _selectedFilter.value?.selectedYear2 ?: GraphSelectedYearMode.All
 
         Log.d("skyfolk-graph", "runSearch: mode = $mode")
 
@@ -329,7 +332,7 @@ class StatisticViewModel(
                             selectedYear = selectedYear,
                             allEvents = eventsStorageInteractor.getAllEvents(),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
-                            quantFilter = onlyQuant,
+                            graphQuantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
                             timeInterval = timeInterval,
                             measure = measure
@@ -342,7 +345,7 @@ class StatisticViewModel(
                             selectedYear = selectedYear,
                             allEvents = eventsStorageInteractor.getAllEvents(),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
-                            quantFilter = onlyQuant,
+                            graphQuantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
                             timeInterval = timeInterval,
                             measure = measure
@@ -353,7 +356,7 @@ class StatisticViewModel(
                             selectedYear = selectedYear2,
                             allEvents = eventsStorageInteractor.getAllEvents(),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
-                            quantFilter = onlyQuant,
+                            graphQuantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
                             timeInterval = timeInterval,
                             measure = measure
@@ -366,7 +369,7 @@ class StatisticViewModel(
                             selectedYear = selectedYear,
                             allEvents = eventsStorageInteractor.getAllEvents(),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
-                            quantFilter = onlyQuant,
+                            graphQuantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
                             timeInterval = timeInterval,
                             measure = measure
@@ -377,7 +380,7 @@ class StatisticViewModel(
                             selectedYear = selectedYear,
                             allEvents = eventsStorageInteractor.getAllEvents(),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
-                            quantFilter = onlyQuant2,
+                            graphQuantFilterMode = onlyQuant2,
                             startDayTime = settingsInteractor.startDayTime,
                             timeInterval = timeInterval,
                             measure = measure
@@ -419,14 +422,14 @@ sealed class StatisticFragmentState {
 
 data class SelectedGraphFilter(
     var selectedMode: GraphSelectedMode,
-    var selectedYear: GraphSelectedYear,
-    var selectedYear2: GraphSelectedYear,
+    var selectedYear: GraphSelectedYearMode,
+    var selectedYear2: GraphSelectedYearMode,
     var timeInterval: TimeInterval,
     var measure: Measure,
-    var filter: QuantFilter,
-    var filter2: QuantFilter,
+    var filter: GraphQuantFilterMode,
+    var filter2: GraphQuantFilterMode,
     var listOfQuants: List<QuantBase>,
-    var listOfYears: List<String>
+    var listOfYears: List<Int>
 )
 
 data class NavigateToFeedEvent(

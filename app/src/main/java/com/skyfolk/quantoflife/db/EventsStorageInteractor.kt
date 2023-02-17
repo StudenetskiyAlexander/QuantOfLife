@@ -66,7 +66,7 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
         }, null)
     }
 
-    fun getAllEventsYears(startDayTime: Long): List<String> {
+    fun getAllEventsYears(startDayTime: Long): List<Int> {
         //  TODO Это очень, очень неоптимальный поиск
 
         val minute = 60 * 1000
@@ -89,7 +89,7 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
                     calendar[Calendar.DAY_OF_YEAR]--
                 }
 
-                calendar.getStartDateCalendar(TimeInterval.Year, 0)[Calendar.YEAR].toString()
+                calendar.getStartDateCalendar(TimeInterval.Year, 0)[Calendar.YEAR]
             }
             .distinct()
     }

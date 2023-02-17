@@ -8,24 +8,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import com.github.mikephil.charting.components.XAxis.XAxisPosition
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.skyfolk.quantoflife.GraphSelectedMode
-import com.skyfolk.quantoflife.GraphSelectedYear
-import com.skyfolk.quantoflife.QLog
 import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.databinding.StatisticFragmentBinding
-import com.skyfolk.quantoflife.meansure.QuantFilter
 import com.skyfolk.quantoflife.meansure.fromPositionToMeasure
-import com.skyfolk.quantoflife.ui.feeds.FeedsComposeFragment
+import com.skyfolk.quantoflife.ui.adapter.GraphSelectedYearModeAdapter
+import com.skyfolk.quantoflife.ui.adapter.QuantSelectedModeAdapter
+import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
+import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 import com.skyfolk.quantoflife.ui.theme.Colors
 import com.skyfolk.quantoflife.ui.theme.toInt
 import com.skyfolk.quantoflife.utils.*
@@ -50,7 +48,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
         this.findNavController().navigate(R.id.action_global_to_feeds, bundle)
     }
 
-    fun Fragment.findNavController(): NavController =
+    private fun Fragment.findNavController(): NavController =
         NavHostFragment.findNavController(this)
 
     override fun onCreateView(
@@ -112,14 +110,18 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                             }
 
                         val dataSets = arrayListOf<LineDataSet>()
-                        val set1 = LineDataSet(data.entries[0].entries.map {it}, data.entries[0].name)
+                        val set1 =
+                            LineDataSet(data.entries[0].entries.map { it }, data.entries[0].name)
 
                         setDefaultDataSetPropertiesForFirstSet(set1)
 
                         dataSets.add(set1)
 
                         if (data.entries.size > 1) {
-                            val set2 = LineDataSet(data.entries[1].entries.map {it}, data.entries[1].name)
+                            val set2 = LineDataSet(
+                                data.entries[1].entries.map { it },
+                                data.entries[1].name
+                            )
                             setDefaultDataSetPropertiesForSecondSet(set2)
                             dataSets.add(set2)
                         }
@@ -129,10 +131,10 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                         //TODO Даже в три раза меньше делений это может быть много, сделай нормально
                         binding.chart.xAxis.granularity =
                             if (data.entries[0].entries.size > 20) {
-                            (data.entries[0].entries[1].x - data.entries[0].entries[0].x) * 4
-                        } else {
-                            (data.entries[0].entries[1].x - data.entries[0].entries[0].x)
-                        }
+                                (data.entries[0].entries[1].x - data.entries[0].entries[0].x) * 4
+                            } else {
+                                (data.entries[0].entries[1].x - data.entries[0].entries[0].x)
+                            }
                         binding.chart.xAxis.labelCount = data.entries[0].entries.size
 
                         binding.chart.setOnChartValueSelectedListener(this)
@@ -167,44 +169,51 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
 
         viewModel.selectedFilter.observe(viewLifecycleOwner) { filter: SelectedGraphFilter? ->
             filter?.let { it: SelectedGraphFilter ->
-                val listOfQuantName = it.listOfQuants.map { it.name }.toMutableList()
-                listOfQuantName.add(0, "Все события")
-                val quantsSpinnerAdapter = ArrayAdapter(
+                val listOfQuantFilterModes: MutableList<GraphQuantFilterMode> =
+                    it.listOfQuants.map { GraphQuantFilterMode.OnlySelected(it) }.toMutableList()
+                listOfQuantFilterModes.add(0, GraphQuantFilterMode.All)
+                val quantsSpinnerAdapter = QuantSelectedModeAdapter(
                     requireContext(),
-                    android.R.layout.simple_spinner_item,
-                    listOfQuantName
+                    listOfQuantFilterModes
                 )
-                quantsSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 binding.eventSpinner.adapter = quantsSpinnerAdapter
                 binding.eventSpinner2.adapter = quantsSpinnerAdapter
 
-                Log.d("skyfolk-graph", "onCreateView: ${it.selectedMode}")
+                Log.d("skyfolk-prefs", "onCreateView: ${(it.filter as? GraphQuantFilterMode.OnlySelected)?.quant?.name}")
 
                 binding.modeSpinner.setSelection(it.selectedMode.toPosition(), false)
                 binding.meansureSpinner.setSelection(it.measure.toPosition(), false)
+                quantsSpinnerAdapter.getPosition(it.filter)
                 binding.timePeriodSpinner.setSelection(it.timeInterval.toGraphPosition(), false)
-                binding.eventSpinner.setSelection(it.filter.toGraphPosition(listOfQuantName), false)
+
+                binding.eventSpinner.setSelection(
+                    quantsSpinnerAdapter.getPosition(it.filter),
+                    false
+                )
                 binding.eventSpinner2.setSelection(
-                    it.filter2.toGraphPosition(listOfQuantName),
+                    quantsSpinnerAdapter.getPosition(it.filter),
                     false
                 )
 
-                val listOfYears = it.listOfYears.toMutableList()
-                listOfYears.add(0, "Все годы")
-                val yearsSpinnerAdapter = ArrayAdapter(
+                val listOfYears: MutableList<GraphSelectedYearMode> = it.listOfYears.map {
+                    GraphSelectedYearMode.OnlyYearMode(it)
+                }.toMutableList()
+                listOfYears.add(0, GraphSelectedYearMode.All)
+
+                val yearsSpinnerAdapter = GraphSelectedYearModeAdapter(
                     requireContext(),
-                    android.R.layout.simple_spinner_item,
                     listOfYears
                 )
-                yearsSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 binding.yearPeriodSpinner.adapter = yearsSpinnerAdapter
+                val selectedPosition = yearsSpinnerAdapter.getPosition(it.selectedYear)
                 binding.yearPeriodSpinner.setSelection(
-                    it.selectedYear.toGraphPosition(listOfYears),
+                    selectedPosition,
                     false
                 )
+
                 binding.yearPeriodSpinner2.adapter = yearsSpinnerAdapter
                 binding.yearPeriodSpinner2.setSelection(
-                    it.selectedYear2.toGraphPosition(listOfYears),
+                    selectedPosition,
                     false
                 )
 
@@ -318,13 +327,8 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    val newSelectedYearName = when (position) {
-                        0 -> GraphSelectedYear.All
-                        else -> GraphSelectedYear.OnlyYear(
-                            parent.getItemAtPosition(position).toString().toInt()
-                        )
-                    }
-                    viewModel.setYearFilter(filter = newSelectedYearName)
+                    val newMode = parent.getItemAtPosition(position) as GraphSelectedYearMode
+                    viewModel.setYearFilter(filter = newMode)
                     isSelectionFromTouch = false
                 }
 
@@ -343,8 +347,8 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                         return
                     }
                     val newSelectedYearName = when (position) {
-                        0 -> GraphSelectedYear.All
-                        else -> GraphSelectedYear.OnlyYear(
+                        0 -> GraphSelectedYearMode.All
+                        else -> GraphSelectedYearMode.OnlyYearMode(
                             parent.getItemAtPosition(position).toString().toInt()
                         )
                     }
@@ -366,13 +370,8 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    val newSelectedEventFilterName = when (position) {
-                        0 -> QuantFilter.All
-                        else -> QuantFilter.OnlySelected(
-                            parent.getItemAtPosition(position).toString()
-                        )
-                    }
-                    viewModel.setEventFilter(1, filter = newSelectedEventFilterName)
+                    val newMode = parent.getItemAtPosition(position) as GraphQuantFilterMode
+                    viewModel.setEventFilter(1, filter = newMode)
                     isSelectionFromTouch = false
                 }
 
@@ -390,13 +389,8 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    val newSelectedEventFilterName = when (position) {
-                        0 -> QuantFilter.All
-                        else -> QuantFilter.OnlySelected(
-                            parent.getItemAtPosition(position).toString()
-                        )
-                    }
-                    viewModel.setEventFilter(2, filter = newSelectedEventFilterName)
+                    val newMode = parent.getItemAtPosition(position) as GraphQuantFilterMode
+                    viewModel.setEventFilter(2, filter = newMode)
                     isSelectionFromTouch = false
                 }
 

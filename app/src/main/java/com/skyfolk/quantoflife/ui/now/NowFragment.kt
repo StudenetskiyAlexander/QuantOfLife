@@ -3,6 +3,7 @@ package com.skyfolk.quantoflife.ui.now
 import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,6 +31,12 @@ import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener
 import uk.co.markormesher.android_fab.SpeedDialMenuItem
 import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener
 
+class TestSkyfolk {
+
+    fun pr() {
+        Log.d("skyfolk-prefs", "pr: ")
+    }
+}
 class NowFragment : Fragment() {
     private val viewModel: NowViewModel by viewModel()
     private val settingsInteractor: SettingsInteractor by inject()
@@ -41,23 +48,24 @@ class NowFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = NowFragmentBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        viewModel.toastState.observe(viewLifecycleOwner, { message ->
+        viewModel.toastState.observe(viewLifecycleOwner) { message ->
             if (message != "") {
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             }
-        })
-        viewModel.dialogState.observe(viewLifecycleOwner, { dialog ->
+        }
+        viewModel.dialogState.observe(viewLifecycleOwner) { dialog ->
             if (dialog != null) {
                 val fm: FragmentManager = requireActivity().supportFragmentManager
                 dialog.show(fm, dialog.tag)
             }
-        })
+        }
 
         lifecycleScope.launchWhenResumed {
             viewModel.todayTotal.collect {
@@ -74,7 +82,7 @@ class NowFragment : Fragment() {
             }
         }
 
-        viewModel.listOfGoal.observe(viewLifecycleOwner, {
+        viewModel.listOfGoal.observe(viewLifecycleOwner) {
             if (it.size == 0) binding.goalsLayout.visibility = View.GONE
             else {
                 binding.goalsLayout.visibility = View.VISIBLE
@@ -93,7 +101,7 @@ class NowFragment : Fragment() {
                 }
                 binding.listOfGoals.adapter = adapterGoals
             }
-        })
+        }
 
         binding.categoryPhysical.text = settingsInteractor.categoryNames[QuantCategory.Physical]
         binding.categoryEmotion.text = settingsInteractor.categoryNames[QuantCategory.Emotion]

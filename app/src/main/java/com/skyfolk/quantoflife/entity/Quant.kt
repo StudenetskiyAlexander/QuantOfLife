@@ -3,11 +3,17 @@ package com.skyfolk.quantoflife.entity
 import java.util.*
 
 sealed class QuantBase(
+    @Transient
     open var id: String = UUID.randomUUID().toString(), //TODO Replace to GUID
+    @Transient
     open var name: String,
+    @Transient
     open var icon: String,
+    @Transient
     open var primalCategory: QuantCategory,
+    @Transient
     open var description: String,
+    @Transient
     open var usageCount: Int = 0
 ) {
     data class QuantNote(
@@ -18,6 +24,7 @@ sealed class QuantBase(
         override var description: String,
         override var usageCount: Int = 0
     ) : QuantBase(id, name, icon, primalCategory, description, usageCount) {
+
         override fun copy(): QuantNote {
             return QuantNote(id, name, icon, primalCategory, description, usageCount)
         }
@@ -32,12 +39,14 @@ sealed class QuantBase(
         override var description: String,
         override var usageCount: Int = 0
     ) : QuantBase(id, name, icon, primalCategory, description, usageCount) {
+
         fun getBonusFor(category: QuantCategory): QuantBonusBase.QuantBonusRated? {
             for (bonus in bonuses) {
                 if (bonus.category == category) return bonus
             }
             return null
         }
+
         override fun copy(): QuantRated {
             val oldBonuses = ArrayList<QuantBonusBase.QuantBonusRated>()
             for (bonus in bonuses) {
@@ -55,6 +64,7 @@ sealed class QuantBase(
         override var description: String,
         override var usageCount: Int = 0
     ) : QuantBase(id, name, icon, primalCategory, description, usageCount) {
+
         override fun copy(): QuantMeasure {
             return QuantMeasure(id, name, icon, primalCategory, description, usageCount)
         }
@@ -85,7 +95,8 @@ sealed class QuantBase(
                     eventId ?: UUID.randomUUID().toString(),
                     this.id,
                     date,
-                    note)
+                    note
+                )
             }
         }
     }
@@ -94,13 +105,13 @@ sealed class QuantBase(
         return id == quant.id
     }
 
-    abstract fun copy() : QuantBase
+    abstract fun copy(): QuantBase
 }
 
 sealed class QuantBonusBase(
+    @Transient
     open var category: QuantCategory
-
-) {
+)  {
     data class QuantBonusRated(
         override var category: QuantCategory,
         var baseBonus: Double,
@@ -112,14 +123,14 @@ enum class QuantCategory {
     Physical, Emotion, Evolution, Other, None, All
 }
 
-fun String.toQuantCategory() : QuantCategory {
-   return when (this) {
-       QuantCategory.All.name -> QuantCategory.All
-       QuantCategory.Physical.name -> QuantCategory.Physical
-       QuantCategory.Emotion.name -> QuantCategory.Emotion
-       QuantCategory.Evolution.name -> QuantCategory.Evolution
-       QuantCategory.Other.name -> QuantCategory.Other
-       QuantCategory.None.name -> QuantCategory.None
-       else -> QuantCategory.None
-   }
+fun String.toQuantCategory(): QuantCategory {
+    return when (this) {
+        QuantCategory.All.name -> QuantCategory.All
+        QuantCategory.Physical.name -> QuantCategory.Physical
+        QuantCategory.Emotion.name -> QuantCategory.Emotion
+        QuantCategory.Evolution.name -> QuantCategory.Evolution
+        QuantCategory.Other.name -> QuantCategory.Other
+        QuantCategory.None.name -> QuantCategory.None
+        else -> QuantCategory.None
+    }
 }

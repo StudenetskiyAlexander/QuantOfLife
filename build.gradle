@@ -3,6 +3,7 @@ buildscript {
         google()
         jcenter()
         maven { url 'https://jitpack.io' }
+        maven { url "https://artifactory.cronapp.io/public-release/" }
         mavenCentral()
     }
     dependencies {
@@ -16,6 +17,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://artifactory.cronapp.io/public-release/" }
         maven { url 'https://jitpack.io' }
     }
 }

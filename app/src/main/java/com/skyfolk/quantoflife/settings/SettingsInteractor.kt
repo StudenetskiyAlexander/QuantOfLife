@@ -2,19 +2,23 @@ package com.skyfolk.quantoflife.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
+import androidx.core.content.edit
+import com.google.gson.*
+import com.google.gson.typeadapters.RuntimeTypeAdapterFactory
 import com.skyfolk.quantoflife.GraphSelectedMode
-import com.skyfolk.quantoflife.GraphSelectedYear
-import com.skyfolk.quantoflife.QLog
 import com.skyfolk.quantoflife.R
+import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.meansure.Measure
-import com.skyfolk.quantoflife.meansure.QuantFilter
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
-import java.sql.Time
+import com.skyfolk.quantoflife.ui.entity.GraphQuantFilterMode
+import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
+import java.lang.reflect.Type
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
+
 
 class SettingsInteractor(private val context: Context) {
     companion object {
@@ -61,12 +65,12 @@ class SettingsInteractor(private val context: Context) {
 
     var selectedGraphQuantFirst by preferences.quantFilter(
         key = { SELECTED_GRAPH_FIRST_QUANT },
-        defaultValue = QuantFilter.All
+        defaultValue = GraphQuantFilterMode.All
     )
 
     var selectedGraphQuantSecond by preferences.quantFilter(
         key = { SELECTED_GRAPH_SECOND_QUANT },
-        defaultValue = QuantFilter.All
+        defaultValue = GraphQuantFilterMode.All
     )
 
     var selectedGraphMeasure by preferences.measure(
@@ -285,22 +289,22 @@ class SettingsInteractor(private val context: Context) {
         }
 
     private fun SharedPreferences.graphSelectedYear(
-        defaultValue: GraphSelectedYear = GraphSelectedYear.All,
+        defaultValue: GraphSelectedYearMode = GraphSelectedYearMode.All,
         key: (KProperty<*>) -> String = KProperty<*>::name
-    ): ReadWriteProperty<Any, GraphSelectedYear> =
-        object : ReadWriteProperty<Any, GraphSelectedYear> {
+    ): ReadWriteProperty<Any, GraphSelectedYearMode> =
+        object : ReadWriteProperty<Any, GraphSelectedYearMode> {
             override fun getValue(
                 thisRef: Any,
                 property: KProperty<*>
-            ): GraphSelectedYear {
+            ): GraphSelectedYearMode {
                 return when (val value = getString(key(property), defaultValue.toString())
                     ?: defaultValue.toString()) {
-                    GraphSelectedYear.All.toString() -> GraphSelectedYear.All
+                    GraphSelectedYearMode.All.toString() -> GraphSelectedYearMode.All
                     else -> {
                         if (value.toIntOrNull() != null) {
-                            GraphSelectedYear.OnlyYear(value.toInt())
+                            GraphSelectedYearMode.OnlyYearMode(value.toInt())
                         } else {
-                            GraphSelectedYear.All
+                            GraphSelectedYearMode.All
                         }
 
                     }
@@ -310,14 +314,14 @@ class SettingsInteractor(private val context: Context) {
             override fun setValue(
                 thisRef: Any,
                 property: KProperty<*>,
-                value: GraphSelectedYear
+                value: GraphSelectedYearMode
             ) {
                 when (value) {
-                    GraphSelectedYear.All -> edit().putString(
+                    GraphSelectedYearMode.All -> edit().putString(
                         key(property),
-                        GraphSelectedYear.All::class.java.canonicalName
+                        GraphSelectedYearMode.All::class.java.canonicalName
                     ).apply()
-                    is GraphSelectedYear.OnlyYear -> edit().putString(
+                    is GraphSelectedYearMode.OnlyYearMode -> edit().putString(
                         key(property),
                         value.year.toString()
                     ).apply()
@@ -359,26 +363,40 @@ class SettingsInteractor(private val context: Context) {
             }
         }
 
-    fun SharedPreferences.quantFilter(
-        defaultValue: QuantFilter = QuantFilter.All,
+
+    private val graphQuantFilterModeTypeAdapter = RuntimeTypeAdapterFactory.of(GraphQuantFilterMode::class.java, "type")
+        .registerSubtype(GraphQuantFilterMode.All::class.java)
+        .registerSubtype(GraphQuantFilterMode.OnlySelected::class.java, GraphQuantFilterMode.OnlySelected::class.java.name)
+
+    private val quantTypeAdapter = RuntimeTypeAdapterFactory.of(QuantBase::class.java)
+        .registerSubtype(QuantBase.QuantRated::class.java)
+        .registerSubtype(QuantBase.QuantMeasure::class.java)
+        .registerSubtype(QuantBase.QuantNote::class.java)
+
+    private val gson = GsonBuilder()
+        .registerTypeAdapterFactory(graphQuantFilterModeTypeAdapter)
+        .registerTypeAdapterFactory(quantTypeAdapter)
+        .create()
+
+    private fun SharedPreferences.quantFilter(
+        defaultValue: GraphQuantFilterMode = GraphQuantFilterMode.All,
         key: (KProperty<*>) -> String = KProperty<*>::name
-    ): ReadWriteProperty<Any, QuantFilter> =
-        object : ReadWriteProperty<Any, QuantFilter> {
+    ): ReadWriteProperty<Any, GraphQuantFilterMode> =
+        object : ReadWriteProperty<Any, GraphQuantFilterMode> {
             override fun getValue(
                 thisRef: Any,
                 property: KProperty<*>
-            ): QuantFilter {
-                return when (val quant = getString(key(property), defaultValue.toString())
-                    ?: defaultValue.toString()) {
-                    "Все события" -> QuantFilter.All
-                    else -> QuantFilter.OnlySelected(quant)
-                }
+            ): GraphQuantFilterMode {
+                val jsonValue = getString(key(property), null) ?: return defaultValue
+                return gson.fromJson(jsonValue, GraphQuantFilterMode::class.java)
             }
 
             override fun setValue(
                 thisRef: Any,
                 property: KProperty<*>,
-                value: QuantFilter
-            ) = edit().putString(key(property), value.toString()).apply()
+                value: GraphQuantFilterMode
+            ) = edit {
+                putString(key(property), gson.toJson(value))
+            }
         }
 }
