@@ -50,8 +50,6 @@ class SettingsInteractor(private val context: Context) {
     var selectedGraphMode by preferences.graphSelectedMode(GraphSelectedMode.Common)
     var statisticTimeIntervalSelectedElement by preferences.timeInterval(gson, TimeInterval.All)
     var statisticSearchText by preferences.string("")
-    var statisticTimeStart by preferences.long(0)
-    var statisticTimeEnd by preferences.long(0)
 
     var feedsQuantFilterMode by preferences.quantFilter(gson, QuantFilterMode.All)
     var isOnboardingComplete by preferences.boolean(true)

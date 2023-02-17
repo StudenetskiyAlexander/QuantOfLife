@@ -18,7 +18,6 @@ import com.skyfolk.quantoflife.entity.EventBase
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.adapter.QuantFilterModeAdapter
-import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment
 import com.skyfolk.quantoflife.utils.setOnHideByTimeout
@@ -161,8 +160,8 @@ class FeedsFragment : Fragment() {
                     listOfQuantFilterModes
                 )
                 binding.quantFilterModeSpinner.adapter = quantsSpinnerAdapter
-                val index = listOfQuantFilterModes.indexOf(state.selectedEventFilter)
-                selectedEventFilter = state.selectedEventFilter
+                val index = listOfQuantFilterModes.indexOf(state.selectedQuantFilterMode)
+                selectedEventFilter = state.selectedQuantFilterMode
                 binding.quantFilterModeSpinner.setSelection(index, false)
 
                 // State type

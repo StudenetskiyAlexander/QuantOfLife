@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.ArrayList
 
 class FeedsViewModel(
     private val eventsStorageInteractor: EventsStorageInteractor,
@@ -38,7 +37,7 @@ class FeedsViewModel(
         FeedsFragmentState.EventsListLoading(
             listOfQuants = quantsStorageInteractor.getAllQuantsList(false),
             selectedTimeInterval = settingsInteractor.statisticTimeIntervalSelectedElement,
-            selectedEventFilter = settingsInteractor.feedsQuantFilterMode,
+            selectedQuantFilterMode = settingsInteractor.feedsQuantFilterMode,
             selectedTextFilter = settingsInteractor.statisticSearchText,
             quantCategoryNames = settingsInteractor.getCategoryNames()
         )
@@ -53,7 +52,7 @@ class FeedsViewModel(
 
         viewModelScope.launch {
             val selectedTimeInterval = _state.value.selectedTimeInterval
-            val selectedEventFilter = _state.value.selectedEventFilter
+            val selectedEventFilter = _state.value.selectedQuantFilterMode
 
             updateStateToLoading(_state)
 
@@ -132,22 +131,18 @@ class FeedsViewModel(
 
     fun setTimeIntervalState(timeInterval: TimeInterval) {
         settingsInteractor.statisticTimeIntervalSelectedElement = timeInterval
-        if (timeInterval is TimeInterval.Selected) {
-            settingsInteractor.statisticTimeStart = timeInterval.start
-            settingsInteractor.statisticTimeEnd = timeInterval.end
-        }
-
+        _state.value.selectedTimeInterval = timeInterval
         runSearch()
     }
 
     fun setSearchText(searchText: String) {
         settingsInteractor.statisticSearchText = searchText
-
         runSearch()
     }
 
     fun setSelectedQuantFilterMode(mode: QuantFilterMode) {
         settingsInteractor.feedsQuantFilterMode = mode
+        _state.value.selectedQuantFilterMode = mode
         runSearch()
     }
 

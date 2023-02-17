@@ -38,9 +38,10 @@ class FeedsComposeFragment : Fragment() {
                 QLog.d("skyfolk-graph", "event from graph ${start.toDate()} to ${end.toDate()}")
                 viewModel.setTimeIntervalState(TimeInterval.Selected(start, end))
             }
-//            else {
-//                viewModel.setSelectedQuantFilterMode(null, true)
-//            }
+            else {
+                // TODO!
+                //viewModel.r(TimeInterval.All)
+            }
         }
     }
 
@@ -56,7 +57,6 @@ class FeedsComposeFragment : Fragment() {
 
                     val state by viewModel.state.collectAsState()
 
-                    Log.d("skyfolk-feeds", "onCreateView: ${state.selectedTimeInterval}")
                     val startIntervalCalendar = remember { viewModel.getDefaultCalendar() }
                     val endIntervalCalendar = remember { viewModel.getDefaultCalendar() }
 
@@ -107,8 +107,9 @@ class FeedsComposeFragment : Fragment() {
 
                                 FilterBlock(
                                     listOfQuantFilterModes = listOfQuantFilterModes,
-                                    selectedQuantFilterMode = state.selectedEventFilter,
+                                    selectedQuantFilterMode = state.selectedQuantFilterMode,
                                     onSelectQuantFilterMode = { mode ->
+                                        Log.d("skyfolk-feeds", "onCreateView: $mode")
                                         viewModel.setSelectedQuantFilterMode(mode)
                                     },
                                     listOfTimeInterval = listOf(

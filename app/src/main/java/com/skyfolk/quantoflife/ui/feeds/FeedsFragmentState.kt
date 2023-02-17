@@ -10,21 +10,21 @@ import kotlinx.coroutines.flow.update
 
 sealed class FeedsFragmentState(
     open val listOfQuants: List<QuantBase>,
-    open val selectedTimeInterval: TimeInterval,
-    open val selectedEventFilter: QuantFilterMode,
+    open var selectedTimeInterval: TimeInterval,
+    open var selectedQuantFilterMode: QuantFilterMode,
     open val selectedTextFilter: String,
     open val quantCategoryNames: List<Pair<QuantCategory, String>>
 ) {
     data class EventsListLoading(
         override val listOfQuants: List<QuantBase>,
-        override val selectedTimeInterval: TimeInterval,
-        override val selectedEventFilter: QuantFilterMode,
+        override var selectedTimeInterval: TimeInterval,
+        override var selectedQuantFilterMode: QuantFilterMode,
         override val selectedTextFilter: String,
         override val quantCategoryNames: List<Pair<QuantCategory, String>>
     ) : FeedsFragmentState(
         listOfQuants,
         selectedTimeInterval,
-        selectedEventFilter,
+        selectedQuantFilterMode,
         selectedTextFilter,
         quantCategoryNames
     ) {
@@ -34,7 +34,7 @@ sealed class FeedsFragmentState(
                     EventsListLoading(
                         it.listOfQuants,
                         it.selectedTimeInterval,
-                        it.selectedEventFilter,
+                        it.selectedQuantFilterMode,
                         it.selectedTextFilter,
                         it.quantCategoryNames
                     )
@@ -45,8 +45,8 @@ sealed class FeedsFragmentState(
 
     data class LoadingEventsListCompleted(
         override val listOfQuants: List<QuantBase>,
-        override val selectedTimeInterval: TimeInterval,
-        override val selectedEventFilter: QuantFilterMode,
+        override var selectedTimeInterval: TimeInterval,
+        override var selectedQuantFilterMode: QuantFilterMode,
         override val selectedTextFilter: String,
         override val quantCategoryNames: List<Pair<QuantCategory, String>>,
         val listOfEvents: List<EventDisplayable>,
@@ -58,7 +58,7 @@ sealed class FeedsFragmentState(
     ) : FeedsFragmentState(
         listOfQuants,
         selectedTimeInterval,
-        selectedEventFilter,
+        selectedQuantFilterMode,
         selectedTextFilter,
         quantCategoryNames
     ) {
