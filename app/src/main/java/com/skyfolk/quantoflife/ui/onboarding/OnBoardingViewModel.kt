@@ -25,7 +25,7 @@ class OnBoardingViewModel(private val settingsInteractor: SettingsInteractor) : 
         settingsInteractor.categoryNames[QuantCategory.Evolution] = thirdCategoryName
         settingsInteractor.categoryNames[QuantCategory.Other] = fourthCategoryName
 
-        settingsInteractor.setOnBoardingComplete(true)
+        settingsInteractor.isOnboardingComplete = true
         _navigationState.value = OnBoardingWayEvent.OnBoardingCompleted
     }
 }

@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment)
         navView.setupWithNavController(navController)
 
-        if (!settingsInteractor.isOnBoardingCompleted()) {
+        if (!settingsInteractor.isOnboardingComplete) {
             startActivity(Intent(baseContext, OnBoardingActivity::class.java))
         }
     }
