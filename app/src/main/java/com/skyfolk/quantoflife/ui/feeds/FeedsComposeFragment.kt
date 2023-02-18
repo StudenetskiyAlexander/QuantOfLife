@@ -39,8 +39,7 @@ class FeedsComposeFragment : Fragment() {
                 viewModel.setTimeIntervalState(TimeInterval.Selected(start, end))
             }
             else {
-                // TODO!
-                //viewModel.r(TimeInterval.All)
+                viewModel.runSearch()
             }
         }
     }

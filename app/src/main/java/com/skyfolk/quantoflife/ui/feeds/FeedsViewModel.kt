@@ -47,7 +47,7 @@ class FeedsViewModel(
     private val _singleLifeEvent = SingleLiveEvent<FeedsFragmentSingleLifeEvent>()
     val singleLifeEvent: LiveData<FeedsFragmentSingleLifeEvent> get() = _singleLifeEvent
 
-    private fun runSearch() {
+    fun runSearch() {
         Log.d("skyfolk-timer", "runSearchStart: ${System.currentTimeMillis()}")
 
         viewModelScope.launch {
@@ -58,6 +58,7 @@ class FeedsViewModel(
 
             val searchText = settingsInteractor.statisticSearchText
 
+            // TODO Mapper
             val startDate =
                 dateTimeRepository.getCalendar().getStartDateCalendar(
                     selectedTimeInterval,
@@ -137,6 +138,7 @@ class FeedsViewModel(
 
     fun setSearchText(searchText: String) {
         settingsInteractor.statisticSearchText = searchText
+        _state.value.selectedTextFilter = searchText
         runSearch()
     }
 
@@ -164,28 +166,11 @@ class FeedsViewModel(
     fun deleteEvent(event: EventBase) {
         eventsStorageInteractor.deleteEvent(event) { runSearch() }
     }
-
-    private fun getQuantNameById(id: String?): String? {
-        id?.let {
-            return quantsStorageInteractor.getQuantById(it)?.name
-        }
-        return null
-    }
-
-    private fun getQuantIdByName(name: String?): String? {
-        name?.let {
-            return quantsStorageInteractor.getQuantIdByName(it)
-        }
-        return null
-    }
-
-    private data class TimeIntervalWasChanged(val timeInterval: TimeInterval)
-    private data class EventFilterWasChanged(val eventFilter: String?)
 }
 
-fun EventBase.toDisplayableEvents(quants: List<QuantBase>): EventDisplayable? {
+fun EventBase.toDisplayableEvents(allQuants: List<QuantBase>): EventDisplayable? {
 
-    quants.firstOrNull { it.id == this.quantId }?.let {
+    allQuants.firstOrNull { it.id == this.quantId }?.let {
         val value = when {
             (this is EventBase.EventRated) -> this.rate
             (this is EventBase.EventMeasure) -> this.value

@@ -12,14 +12,14 @@ sealed class FeedsFragmentState(
     open val listOfQuants: List<QuantBase>,
     open var selectedTimeInterval: TimeInterval,
     open var selectedQuantFilterMode: QuantFilterMode,
-    open val selectedTextFilter: String,
+    open var selectedTextFilter: String,
     open val quantCategoryNames: List<Pair<QuantCategory, String>>
 ) {
     data class EventsListLoading(
         override val listOfQuants: List<QuantBase>,
         override var selectedTimeInterval: TimeInterval,
         override var selectedQuantFilterMode: QuantFilterMode,
-        override val selectedTextFilter: String,
+        override var selectedTextFilter: String,
         override val quantCategoryNames: List<Pair<QuantCategory, String>>
     ) : FeedsFragmentState(
         listOfQuants,
@@ -47,7 +47,7 @@ sealed class FeedsFragmentState(
         override val listOfQuants: List<QuantBase>,
         override var selectedTimeInterval: TimeInterval,
         override var selectedQuantFilterMode: QuantFilterMode,
-        override val selectedTextFilter: String,
+        override var selectedTextFilter: String,
         override val quantCategoryNames: List<Pair<QuantCategory, String>>,
         val listOfEvents: List<EventDisplayable>,
         val totalPhysicalFound: Double,
