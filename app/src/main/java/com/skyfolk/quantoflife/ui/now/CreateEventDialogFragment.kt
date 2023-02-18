@@ -72,7 +72,7 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
                 else -> {}
             }
         }
-
+        Log.d("skyfolk-measure", "onCreateView: $quant")
         when (quant) {
             is QuantBase.QuantNote -> {
                 binding.eventRating.visibility = View.GONE
@@ -83,6 +83,7 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
                 binding.eventRatingNumeric.visibility = View.GONE
             }
             is QuantBase.QuantMeasure -> {
+                Log.d("skyfolk-measure", "onCreateView: this is a measure")
                 binding.eventRating.visibility = View.GONE
                 binding.eventRatingNumeric.visibility = View.VISIBLE
             }

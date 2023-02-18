@@ -114,8 +114,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:theme="@style/AppTheme.Spinner"
-                android:entries="@array/quant_type_name"/>
+                android:theme="@style/AppTheme.Spinner"/>
 
         </LinearLayout>
 

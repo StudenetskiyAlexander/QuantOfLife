@@ -96,6 +96,7 @@
 
     <string-array name="quant_type_name">
         <item>Оцениваемое</item>
+        <item>Измеряемое</item>
         <item>Заметка</item>
     </string-array>
 

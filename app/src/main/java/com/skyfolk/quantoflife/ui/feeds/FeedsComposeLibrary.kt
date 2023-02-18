@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.entity.EventDisplayable
 import com.skyfolk.quantoflife.entity.QuantCategory
+import com.skyfolk.quantoflife.entity.ValueTypeDisplayable
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.theme.Colors.Orange
@@ -411,12 +412,15 @@ fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) 
                     Text(event.date.toDate(), fontSize = 12.sp)
                 }
 
-                when {
-                    ((event.bonuses != null) && (event.value != null)) -> {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    when (event.valueType) {
+                        ValueTypeDisplayable.STARS -> {
+                            event.value ?: return@Row
+                            event.bonuses ?: return@Row
+
                             RatingBar(
                                 rating = event.value.toFloat(),
                                 color = Color.Cyan,
@@ -450,14 +454,16 @@ fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) 
                                 }", fontSize = 14.sp, fontStyle = FontStyle.Italic, maxLines = 1
                             )
                         }
-                    }
-                    ((event.bonuses == null) && (event.value != null)) -> {
-                        Text(event.value.toString())
+                        ValueTypeDisplayable.NUMBER -> {
+                            // TODO value
+                            Text("= ${event.value}")
+                        }
+                        ValueTypeDisplayable.NOTHING -> {}
                     }
                 }
-
-                Text(event.note, fontSize = 12.sp, maxLines = 3)
             }
+
+            Text(event.note, fontSize = 12.sp, maxLines = 3)
         }
     }
 }
@@ -473,6 +479,7 @@ fun EventItemPreview() {
         date = Calendar.getInstance().timeInMillis,
         note = "Заметка. Много строк - очень-очень длинный текст заметки-примечания для события, где описывается что-то прям важное и нужное.",
         value = 4.0,
+        valueType = ValueTypeDisplayable.NUMBER,
         bonuses = arrayListOf()
     )
     EventItem(event = event, onItemClick = {})

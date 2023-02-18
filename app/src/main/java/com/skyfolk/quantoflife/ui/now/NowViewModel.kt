@@ -15,6 +15,7 @@ import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.import.ImportInteractor
+import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.create_quant.CreateQuantDialogFragment
 import com.skyfolk.quantoflife.ui.goals.CreateGoalDialogFragment
@@ -33,7 +34,8 @@ class NowViewModel(
     private val goalStorageInteractor: IGoalStorageInteractor,
     private val settingsInteractor: SettingsInteractor,
     private val dateTimeRepository: IDateTimeRepository,
-    private val importInteractor: ImportInteractor
+    private val importInteractor: ImportInteractor,
+    private val quantBaseToCreateQuantTypeMapper: QuantBaseToCreateQuantTypeMapper
 ) : ViewModel(), INowViewModel {
     private val _toastState = SingleLiveEvent<String>()
     val toastState: LiveData<String> get() = _toastState
@@ -67,7 +69,7 @@ class NowViewModel(
     }
 
     override fun openCreateNewQuantDialog(existQuant: QuantBase?) {
-        val dialog = CreateQuantDialogFragment(existQuant, settingsInteractor)
+        val dialog = CreateQuantDialogFragment(existQuant, settingsInteractor, quantBaseToCreateQuantTypeMapper)
         dialog.setDialogListener(object : CreateQuantDialogFragment.DialogListener {
             override fun onConfirm(quant: QuantBase) {
                 quantsStorageInteractor.addQuantToDB(quant) {

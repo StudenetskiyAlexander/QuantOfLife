@@ -25,6 +25,7 @@ class CreateGoalDialogFragment(
     ): View {
         binding = CreateGoalDialogBinding.inflate(inflater, container, false)
 
+        //TODO Change to typed adapter
         val categoryArray = listOf(
             settingsInteractor.categoryNames[QuantCategory.Physical],
             settingsInteractor.categoryNames[QuantCategory.Emotion],

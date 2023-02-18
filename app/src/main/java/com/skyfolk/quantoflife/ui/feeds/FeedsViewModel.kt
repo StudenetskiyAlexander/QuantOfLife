@@ -4,13 +4,9 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
 import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
-import com.skyfolk.quantoflife.entity.EventBase
-import com.skyfolk.quantoflife.entity.EventDisplayable
-import com.skyfolk.quantoflife.entity.QuantBase
-import com.skyfolk.quantoflife.entity.QuantCategory
+import com.skyfolk.quantoflife.entity.*
 import com.skyfolk.quantoflife.feeds.getStarTotal
 import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
@@ -29,7 +25,6 @@ class FeedsViewModel(
     private val eventsStorageInteractor: EventsStorageInteractor,
     private val settingsInteractor: SettingsInteractor,
     private val quantsStorageInteractor: IQuantsStorageInteractor,
-    private val dateTimeRepository: IDateTimeRepository,
     private val timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper
 ) : ViewModel() {
     private val _state = MutableStateFlow<FeedsFragmentState>(
@@ -162,30 +157,6 @@ class FeedsViewModel(
             settingsInteractor.feedsTimeIntervalSelectedEnd
         )
     }
-}
-
-fun EventBase.toDisplayableEvents(allQuants: List<QuantBase>): EventDisplayable? {
-
-    allQuants.firstOrNull { it.id == this.quantId }?.let {
-        val value = when {
-            (this is EventBase.EventRated) -> this.rate
-            (this is EventBase.EventMeasure) -> this.value
-            else -> null
-        }
-
-        val bonuses = if (it is QuantBase.QuantRated) it.bonuses else null
-        return EventDisplayable(
-            id = this.id,
-            name = it.name,
-            quantId = this.quantId,
-            icon = it.icon,
-            date = this.date,
-            note = this.note,
-            value = value,
-            bonuses = bonuses
-        )
-    }
-    return null
 }
 
 

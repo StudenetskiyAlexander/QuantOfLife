@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
 import com.skyfolk.quantoflife.db.*
 import com.skyfolk.quantoflife.import.ImportInteractor
+import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.ui.feeds.FeedsViewModel
@@ -24,6 +25,7 @@ class App : Application() {
 
         val mapperModule = module {
             single { TimeIntervalToPeriodInMillisMapper(get()) }
+            single { QuantBaseToCreateQuantTypeMapper() }
         }
 
         val storageModule = module {
@@ -44,9 +46,9 @@ class App : Application() {
         }
 
         val viewModelModule = module {
-            viewModel { NowViewModel(get(), get(), get(), get(), get(), get()) }
+            viewModel { NowViewModel(get(), get(), get(), get(), get(), get(), get()) }
             viewModel { SettingsViewModel(get(), get(), get(), get()) }
-            viewModel { FeedsViewModel(get(), get(), get(), get(), get()) }
+            viewModel { FeedsViewModel(get(), get(), get(), get()) }
             viewModel { StatisticViewModel(get(), get(), get(), get()) }
             viewModel { OnBoardingViewModel(get()) }
         }

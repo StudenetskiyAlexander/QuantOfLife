@@ -2,6 +2,7 @@ package com.skyfolk.quantoflife.ui.create_quant
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,13 +16,17 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.databinding.CreateQuantDialogBinding
 import com.skyfolk.quantoflife.entity.*
+import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
 import com.skyfolk.quantoflife.settings.SettingsInteractor
+import com.skyfolk.quantoflife.ui.adapter.CreateQuantTypeAdapter
+import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.utils.showConfirmDialog
 import java.lang.reflect.Field
 
 class CreateQuantDialogFragment(
     private val quant: QuantBase?,
-    private val settingsInteractor: SettingsInteractor
+    private val settingsInteractor: SettingsInteractor,
+    private val quantBaseToCreateQuantTypeMapper: QuantBaseToCreateQuantTypeMapper
 ) : BottomSheetDialogFragment() {
     private var dialogListener: DialogListener? = null
 
@@ -42,6 +47,7 @@ class CreateQuantDialogFragment(
             false
         )
 
+        //TODO Typed adapter
         val categoryArray = listOf(
             settingsInteractor.categoryNames[QuantCategory.Physical],
             settingsInteractor.categoryNames[QuantCategory.Emotion],
@@ -51,6 +57,12 @@ class CreateQuantDialogFragment(
         val spinnerArrayAdapter =
             ArrayAdapter(requireContext(), R.layout.right_to_left_spinner, categoryArray)
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        val createQuantTypeAdapter = CreateQuantTypeAdapter(
+            requireContext(),
+            listOf(CreateQuantType.RATED, CreateQuantType.MEASURE, CreateQuantType.NOTE)
+        )
+        binding.spinnerQuantType.adapter = createQuantTypeAdapter
 
         binding.spinnerCategory.adapter = spinnerArrayAdapter
         binding.bonusForPhysicalName.text = getString(R.string.bonuses, categoryArray[0])
@@ -63,12 +75,9 @@ class CreateQuantDialogFragment(
             binding.quantName.setText(quant.name)
 
             binding.spinnerCategory.setSelection(quant.primalCategory.ordinal)
+
             binding.spinnerQuantType.setSelection(
-                when (quant) {
-                    is QuantBase.QuantRated -> 0
-                    is QuantBase.QuantNote -> 1
-                    else -> 0
-                }
+                createQuantTypeAdapter.getPosition(quantBaseToCreateQuantTypeMapper.invoke(quant))
             )
 
             if (quant is QuantBase.QuantRated) {
@@ -114,7 +123,10 @@ class CreateQuantDialogFragment(
                     position: Int,
                     id: Long
                 ) {
-                    val viewState = if (position == 0) View.VISIBLE else View.GONE
+                    val newMode = parent.getItemAtPosition(position) as CreateQuantType
+                    Log.d("skyfolk-quant", "onItemSelected: $newMode")
+                    val viewState =
+                        if (newMode == CreateQuantType.RATED) View.VISIBLE else View.GONE
                     binding.bonusForPhysical.visibility = viewState
                     binding.bonusForEmotion.visibility = viewState
                     binding.bonusForEvolution.visibility = viewState
@@ -150,12 +162,12 @@ class CreateQuantDialogFragment(
         }
 
         binding.buttonOk.setOnClickListener {
-            var createdQuant : QuantBase? = null
+            var createdQuant: QuantBase? = null
             val name = binding.quantName.text.toString()
-            val quantType = when (binding.spinnerQuantType.selectedItemPosition) {
-                0 -> QuantBase.QuantRated::class.java.name
-                else -> QuantBase.QuantNote::class.java.name
-            }
+
+            val quantType =
+                createQuantTypeAdapter.getItem(binding.spinnerQuantType.selectedItemPosition)
+
             val category = when (binding.spinnerCategory.selectedItemPosition) {
                 0 -> QuantCategory.Physical
                 1 -> QuantCategory.Emotion
@@ -172,7 +184,8 @@ class CreateQuantDialogFragment(
                 return@setOnClickListener
             }
             when (quantType) {
-                QuantBase.QuantRated::class.java.name -> {
+                CreateQuantType.RATED -> {
+                    // TODO Small this
                     val listOfQuantBonuses = ArrayList<QuantBonusBase.QuantBonusRated>()
                     if (binding.bonusForPhysicalBase.text.isEmpty() && binding.bonusForPhysicalForEach.text.isEmpty() &&
                         binding.bonusForEmotionBase.text.isEmpty() && binding.bonusForEmotionForEach.text.isEmpty() &&
@@ -224,16 +237,7 @@ class CreateQuantDialogFragment(
                         description = binding.noteForQuant.text.toString()
                     )
                 }
-                // Deprecated
-                QuantBase.QuantMeasure::class.java.name -> {
-                    createdQuant = QuantBase.QuantMeasure(
-                        name = name,
-                        icon = listOfIcons[selectedIconIndex!!],
-                        primalCategory = category,
-                        description = binding.noteForQuant.text.toString()
-                    )
-                }
-                QuantBase.QuantNote::class.java.name -> {
+                CreateQuantType.NOTE -> {
                     createdQuant = QuantBase.QuantNote(
                         name = name,
                         icon = listOfIcons[selectedIconIndex!!],
@@ -241,6 +245,15 @@ class CreateQuantDialogFragment(
                         description = binding.noteForQuant.text.toString()
                     )
                 }
+                CreateQuantType.MEASURE -> {
+                    createdQuant = QuantBase.QuantMeasure(
+                        name = name,
+                        icon = listOfIcons[selectedIconIndex!!],
+                        primalCategory = category,
+                        description = binding.noteForQuant.text.toString()
+                    )
+                }
+                null -> createdQuant == null
             }
 
             if (createdQuant != null) {
