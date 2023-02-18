@@ -13,32 +13,31 @@ import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.feeds.getStarTotal
 import com.skyfolk.quantoflife.feeds.getTotal
+import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.EventsListLoading.Companion.updateStateToLoading
 import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.LoadingEventsListCompleted.Companion.updateStateToCompleted
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
-import com.skyfolk.quantoflife.utils.getEndDateCalendar
-import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.*
 
 class FeedsViewModel(
     private val eventsStorageInteractor: EventsStorageInteractor,
     private val settingsInteractor: SettingsInteractor,
     private val quantsStorageInteractor: IQuantsStorageInteractor,
-    private val dateTimeRepository: IDateTimeRepository
+    private val dateTimeRepository: IDateTimeRepository,
+    private val timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper
 ) : ViewModel() {
     private val _state = MutableStateFlow<FeedsFragmentState>(
         FeedsFragmentState.EventsListLoading(
             listOfQuants = quantsStorageInteractor.getAllQuantsList(false),
-            selectedTimeInterval = settingsInteractor.statisticTimeIntervalSelectedElement,
+            selectedTimeInterval = settingsInteractor.feedsTimeIntervalMode,
             selectedQuantFilterMode = settingsInteractor.feedsQuantFilterMode,
-            selectedTextFilter = settingsInteractor.statisticSearchText,
+            selectedTextFilter = settingsInteractor.feedsSearchText,
             quantCategoryNames = settingsInteractor.getCategoryNames()
         )
     )
@@ -51,37 +50,27 @@ class FeedsViewModel(
         Log.d("skyfolk-timer", "runSearchStart: ${System.currentTimeMillis()}")
 
         viewModelScope.launch {
-            val selectedTimeInterval = _state.value.selectedTimeInterval
-            val selectedEventFilter = _state.value.selectedQuantFilterMode
-
             updateStateToLoading(_state)
 
-            val searchText = settingsInteractor.statisticSearchText
+            val selectedTimeInterval = _state.value.selectedTimeInterval
+            val selectedEventFilter = _state.value.selectedQuantFilterMode
+            val searchText = _state.value.selectedTextFilter
+            val interval = timeIntervalToPeriodInMillisMapper.invoke(
+                selectedTimeInterval,
+                settingsInteractor.startDayTime
+            )
 
-            // TODO Mapper
-            val startDate =
-                dateTimeRepository.getCalendar().getStartDateCalendar(
-                    selectedTimeInterval,
-                    settingsInteractor.startDayTime
-                ).timeInMillis
-            val endDate =
-                dateTimeRepository.getCalendar().getEndDateCalendar(
-                    selectedTimeInterval,
-                    settingsInteractor.startDayTime
-                ).timeInMillis
-
-            var listOfEvents = eventsStorageInteractor.getAllEvents()
-                .filter { it.date in startDate until endDate }
+            val listOfEvents = eventsStorageInteractor.getAllEvents()
+                .filter { it.date in interval }
                 .filter {
                     it.note.contains(searchText, ignoreCase = true)
                 }
-
-            selectedEventFilter.let { filter ->
-                listOfEvents = when (filter) {
-                    QuantFilterMode.All -> listOfEvents
-                    is QuantFilterMode.OnlySelected -> listOfEvents.filter { it.quantId == filter.quant.id }
+                .filter {
+                    when (selectedEventFilter) {
+                        QuantFilterMode.All -> true
+                        is QuantFilterMode.OnlySelected -> it.quantId == selectedEventFilter.quant.id
+                    }
                 }
-            }
 
             Log.d("skyfolk-timer", "runSearchEnd: ${System.currentTimeMillis()}")
 
@@ -126,18 +115,18 @@ class FeedsViewModel(
         }
     }
 
-    fun getDefaultCalendar(): Calendar {
-        return dateTimeRepository.getCalendar()
-    }
-
     fun setTimeIntervalState(timeInterval: TimeInterval) {
-        settingsInteractor.statisticTimeIntervalSelectedElement = timeInterval
+        settingsInteractor.feedsTimeIntervalMode = timeInterval
+        if (timeInterval is TimeInterval.Selected) {
+            settingsInteractor.feedsTimeIntervalSelectedStart = timeInterval.start
+            settingsInteractor.feedsTimeIntervalSelectedEnd = timeInterval.end
+        }
         _state.value.selectedTimeInterval = timeInterval
         runSearch()
     }
 
     fun setSearchText(searchText: String) {
-        settingsInteractor.statisticSearchText = searchText
+        settingsInteractor.feedsSearchText = searchText
         _state.value.selectedTextFilter = searchText
         runSearch()
     }
@@ -165,6 +154,13 @@ class FeedsViewModel(
 
     fun deleteEvent(event: EventBase) {
         eventsStorageInteractor.deleteEvent(event) { runSearch() }
+    }
+
+    fun getStoredSelectedTimeInterval(): LongRange {
+        return LongRange(
+            settingsInteractor.feedsTimeIntervalSelectedStart,
+            settingsInteractor.feedsTimeIntervalSelectedEnd
+        )
     }
 }
 

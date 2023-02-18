@@ -13,7 +13,7 @@ fun getTotal(
 
     for (event in events) {
         if (event is EventBase.EventRated) {
-            val foundQuant = quants.filter { it.id == event.quantId }.firstOrNull()
+            val foundQuant = quants.firstOrNull { it.id == event.quantId }
             if (foundQuant is QuantBase.QuantRated) {
                 for (bonus in foundQuant.bonuses) {
                     if (bonus.category == category || category == QuantCategory.None || category == QuantCategory.All) {

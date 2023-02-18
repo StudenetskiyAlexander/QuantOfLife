@@ -76,10 +76,10 @@ class StatisticViewModel(
                     )
 
                     _navigationEvent.value = NavigateToFeedEvent(
-                        startDate = period.start,
-                        endDate = period.end)
+                        startDate = period.first,
+                        endDate = period.last
+                    )
                 }
-
             }
     }
 
@@ -387,17 +387,12 @@ class StatisticViewModel(
                         )
                     )
                 }
-                null -> {}
             }
 
             _barEntryData.value = StatisticFragmentState.Entries(
                 result
             )
         }
-    }
-
-    private fun getQuantIdByName(name: String): String? {
-        return quantsStorageInteractor.getQuantIdByName(name)
     }
 
     fun getFormatter(firstDate: Long, timeInterval: TimeInterval): IntervalAxisValueFormatter {

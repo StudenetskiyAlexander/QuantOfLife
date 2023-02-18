@@ -48,10 +48,13 @@ class SettingsInteractor(private val context: Context) {
     var selectedYearFilter by preferences.graphSelectedYear(gson, GraphSelectedYearMode.All)
     var selectedYearFilter2 by preferences.graphSelectedYear(gson, GraphSelectedYearMode.All)
     var selectedGraphMode by preferences.graphSelectedMode(GraphSelectedMode.Common)
-    var statisticTimeIntervalSelectedElement by preferences.timeInterval(gson, TimeInterval.All)
-    var statisticSearchText by preferences.string("")
 
+    var feedsSearchText by preferences.string("")
     var feedsQuantFilterMode by preferences.quantFilter(gson, QuantFilterMode.All)
+    var feedsTimeIntervalMode by preferences.timeInterval(gson, TimeInterval.All)
+    var feedsTimeIntervalSelectedStart by preferences.long(0)
+    var feedsTimeIntervalSelectedEnd by preferences.long(0)
+
     var isOnboardingComplete by preferences.boolean(true)
     var startDayTime by preferences.long(0)
 

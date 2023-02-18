@@ -1,12 +1,12 @@
 package com.skyfolk.quantoflife.ui.feeds
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -20,7 +20,8 @@ import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment
 import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
 import com.skyfolk.quantoflife.ui.theme.ComposeFlowTestTheme
-import com.skyfolk.quantoflife.utils.*
+import com.skyfolk.quantoflife.utils.setOnHideByTimeout
+import com.skyfolk.quantoflife.utils.toDate
 import org.koin.android.viewmodel.ext.android.viewModel
 
 class FeedsComposeFragment : Fragment() {
@@ -37,8 +38,7 @@ class FeedsComposeFragment : Fragment() {
             if (start != 0L && end != 0L) {
                 QLog.d("skyfolk-graph", "event from graph ${start.toDate()} to ${end.toDate()}")
                 viewModel.setTimeIntervalState(TimeInterval.Selected(start, end))
-            }
-            else {
+            } else {
                 viewModel.runSearch()
             }
         }
@@ -55,9 +55,6 @@ class FeedsComposeFragment : Fragment() {
                 composeView.setContent {
 
                     val state by viewModel.state.collectAsState()
-
-                    val startIntervalCalendar = remember { viewModel.getDefaultCalendar() }
-                    val endIntervalCalendar = remember { viewModel.getDefaultCalendar() }
 
                     ComposeFlowTestTheme {
                         Column(
@@ -80,16 +77,13 @@ class FeedsComposeFragment : Fragment() {
                                 }
                                 is FeedsFragmentState.LoadingEventsListCompleted -> {
                                     binding.progress.visibility = View.GONE
-                                    val state =
-                                        state as FeedsFragmentState.LoadingEventsListCompleted
 
                                     EventsList(
                                         modifier = Modifier.weight(2f),
-                                        events = state.listOfEvents.reversed()
+                                        events = (state as FeedsFragmentState.LoadingEventsListCompleted).listOfEvents.reversed()
                                     ) { id ->
                                         viewModel.editEvent(id)
                                     }
-
 
                                     SeparatorLine()
                                 }
@@ -108,16 +102,9 @@ class FeedsComposeFragment : Fragment() {
                                     listOfQuantFilterModes = listOfQuantFilterModes,
                                     selectedQuantFilterMode = state.selectedQuantFilterMode,
                                     onSelectQuantFilterMode = { mode ->
-                                        Log.d("skyfolk-feeds", "onCreateView: $mode")
                                         viewModel.setSelectedQuantFilterMode(mode)
                                     },
-                                    listOfTimeInterval = listOf(
-                                        TimeInterval.All,
-                                        TimeInterval.Selected(
-                                            startIntervalCalendar.timeInMillis,
-                                            endIntervalCalendar.timeInMillis
-                                        )
-                                    ),
+                                    listOfTimeInterval = getTimeIntervalModes(),
                                     selectedTimeInterval = state.selectedTimeInterval,
                                     selectedTextFilter = state.selectedTextFilter,
                                     onSelectTimeInterval = { timeInterval ->
@@ -179,5 +166,18 @@ class FeedsComposeFragment : Fragment() {
         }
 
         return binding.root
+    }
+
+    private fun getTimeIntervalModes() : List<TimeInterval> {
+        val storedTimeRange = viewModel.getStoredSelectedTimeInterval()
+
+        return listOf(
+            TimeInterval.All,
+            TimeInterval.Today,
+            TimeInterval.Week,
+            TimeInterval.Month,
+            TimeInterval.Year,
+            TimeInterval.Selected(storedTimeRange.first, storedTimeRange.last)
+        )
     }
 }
