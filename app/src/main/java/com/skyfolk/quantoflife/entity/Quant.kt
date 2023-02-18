@@ -62,11 +62,22 @@ sealed class QuantBase(
         override var icon: String,
         override var primalCategory: QuantCategory,
         override var description: String,
-        override var usageCount: Int = 0
+        override var usageCount: Int = 0,
+        var minSize: Int,
+        var maxSize: Int
     ) : QuantBase(id, name, icon, primalCategory, description, usageCount) {
 
         override fun copy(): QuantMeasure {
-            return QuantMeasure(id, name, icon, primalCategory, description, usageCount)
+            return QuantMeasure(
+                id,
+                name,
+                icon,
+                primalCategory,
+                description,
+                usageCount,
+                minSize,
+                maxSize
+            )
         }
     }
 
@@ -111,7 +122,7 @@ sealed class QuantBase(
 sealed class QuantBonusBase(
     @Transient
     open var category: QuantCategory
-)  {
+) {
     data class QuantBonusRated(
         override var category: QuantCategory,
         var baseBonus: Double,

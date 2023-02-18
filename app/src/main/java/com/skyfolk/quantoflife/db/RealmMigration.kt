@@ -69,5 +69,11 @@ class RealmMigration : RealmMigration {
                 ?.renameField("temp_key", "numericValue")
 
         }
+
+        if (oldVersion == 9L) {
+            schema["QuantDbEntity"]
+                ?.addField("minSize", Int::class.java)
+                ?.addField("maxSize", Int::class.java)
+        }
     }
 }

@@ -19,12 +19,16 @@ open class QuantDbEntity(
     var typeDescription: String = QuantBase.QuantNote::class.java.name,
     var description: String = "Подсказка для оценки",
     var isDeleted: Boolean = false,
-    var usageCount: Int = 0
+    var usageCount: Int = 0,
+    var minSize: Int = 0,
+    var maxSize: Int = 0
 ) : RealmObject() {
     companion object {
         fun toQuantDbEntity(quant: QuantBase): QuantDbEntity {
             var type = QuantBase.QuantNote::class.java.name
             val bonusList = RealmList<QuantBonusDbEntity>()
+            var minValue = 0
+            var maxValue = 0
             when (quant) {
                 is QuantBase.QuantRated -> {
                     type = QuantBase.QuantRated::class.java.name
@@ -34,10 +38,10 @@ open class QuantDbEntity(
                 }
                 is QuantBase.QuantMeasure -> {
                     type = QuantBase.QuantMeasure::class.java.name
+                    minValue = quant.minSize
+                    maxValue = quant.maxSize
                 }
-                is QuantBase.QuantNote -> {
-
-                }
+                is QuantBase.QuantNote -> {}
             }
 
             return QuantDbEntity(
@@ -47,7 +51,9 @@ open class QuantDbEntity(
                 quant.primalCategory.name,
                 bonusList,
                 type,
-                quant.description
+                quant.description,
+                minSize = minValue,
+                maxSize = maxValue
             )
         }
     }
@@ -76,7 +82,9 @@ open class QuantDbEntity(
                     icon,
                     QuantCategory.valueOf(primalCategoryDescription),
                     description,
-                    usageCount
+                    usageCount,
+                    0,// Think about it. In this moment minSize not needed
+                    maxSize
                 )
             }
             else -> {

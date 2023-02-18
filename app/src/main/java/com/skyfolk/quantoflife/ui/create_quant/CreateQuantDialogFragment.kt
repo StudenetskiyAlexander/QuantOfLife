@@ -250,7 +250,9 @@ class CreateQuantDialogFragment(
                         name = name,
                         icon = listOfIcons[selectedIconIndex!!],
                         primalCategory = category,
-                        description = binding.noteForQuant.text.toString()
+                        description = binding.noteForQuant.text.toString(),
+                        minSize = 0, // Think about it, it this moment min size not need
+                        maxSize = 100
                     )
                 }
                 null -> createdQuant == null
