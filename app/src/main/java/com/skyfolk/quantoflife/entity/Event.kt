@@ -20,7 +20,8 @@ sealed class EventBase(
     open val id: String,
     open var quantId: String,
     open var date: Long,
-    open var note: String
+    open var note: String,
+    open var isHidden: Boolean = false
 ) {
     data class EventNote(
         override val id: String,

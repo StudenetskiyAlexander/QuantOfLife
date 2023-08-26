@@ -11,9 +11,9 @@ sealed class QuantFilterMode : SpinnerSelectableItem, TypedSealedClass {
 
     class OnlySelected(val quant: QuantBase) : QuantFilterMode() {
 
-        override fun equals(other: Any?): Boolean {
-            return (other as? OnlySelected)?.quant?.id == this.quant.id
-        }
+//        override fun equals(other: Any?): Boolean {
+//            return (other as? OnlySelected)?.quant?.id == this.quant.id
+//        }
 
         override fun hashCode(): Int {
             var result = quant.hashCode()
@@ -25,5 +25,12 @@ sealed class QuantFilterMode : SpinnerSelectableItem, TypedSealedClass {
     override fun toPresentation() = when (this) {
         All -> "Все события"
         is OnlySelected -> quant.name
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return when (this) {
+            is All -> other is All
+            is OnlySelected -> (other as? OnlySelected)?.quant?.id == this.quant.id
+        }
     }
 }

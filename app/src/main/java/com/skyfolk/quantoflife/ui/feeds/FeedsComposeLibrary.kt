@@ -294,19 +294,19 @@ fun TextSearchField(placeholder: String, initialValue: String, onEnter: (String)
 
 class QuantFilterToContentMapper : (QuantFilterMode) -> String {
     override fun invoke(quantFilterMode: QuantFilterMode): String = when (quantFilterMode) {
-        QuantFilterMode.All -> "Все события"
+        is QuantFilterMode.All -> "Все события"
         is QuantFilterMode.OnlySelected -> quantFilterMode.quant.name
     }
 }
 
 class TimeIntervalToContentMapper : (TimeInterval) -> String {
     override fun invoke(timeInterval: TimeInterval): String = when (timeInterval) {
-        TimeInterval.All -> "Все время"
-        TimeInterval.Month -> "Месяц"
+        is TimeInterval.All -> "Все время"
+        is TimeInterval.Month -> "Месяц"
         is TimeInterval.Selected -> "Выбранный интервал"
-        TimeInterval.Today -> "Сегодня"
-        TimeInterval.Week -> "Неделя"
-        TimeInterval.Year -> "Год"
+        is TimeInterval.Today -> "Сегодня"
+        is TimeInterval.Week -> "Неделя"
+        is TimeInterval.Year -> "Год"
     }
 }
 
@@ -461,9 +461,9 @@ fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) 
                         ValueTypeDisplayable.NOTHING -> {}
                     }
                 }
-            }
 
-            Text(event.note, fontSize = 12.sp, maxLines = 3)
+                Text(event.note, fontSize = 12.sp, maxLines = 3)
+            }
         }
     }
 }

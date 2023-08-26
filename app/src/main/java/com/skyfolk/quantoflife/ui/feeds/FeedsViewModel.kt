@@ -55,14 +55,14 @@ class FeedsViewModel(
                 settingsInteractor.startDayTime
             )
 
-            val listOfEvents = eventsStorageInteractor.getAllEvents()
+            val listOfEvents = eventsStorageInteractor.getAllEvents(true)
                 .filter { it.date in interval }
                 .filter {
                     it.note.contains(searchText, ignoreCase = true)
                 }
                 .filter {
                     when (selectedEventFilter) {
-                        QuantFilterMode.All -> true
+                        is QuantFilterMode.All -> true
                         is QuantFilterMode.OnlySelected -> it.quantId == selectedEventFilter.quant.id
                     }
                 }

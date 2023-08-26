@@ -1,14 +1,11 @@
 package com.skyfolk.quantoflife.import
 
-import android.content.Context
 import com.skyfolk.quantoflife.QLog
-import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.db.DBInteractor
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
 import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
 import com.skyfolk.quantoflife.entity.EventBase
 import com.skyfolk.quantoflife.entity.QuantBase
-import com.skyfolk.quantoflife.settings.SettingsInteractor
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

@@ -1,6 +1,5 @@
 package com.skyfolk.quantoflife.ui.now
 
-import android.util.Log
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,23 +9,25 @@ import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
 import com.skyfolk.quantoflife.db.IGoalStorageInteractor
 import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
-import com.skyfolk.quantoflife.entity.*
-import com.skyfolk.quantoflife.utils.getStartDateCalendar
-import com.skyfolk.quantoflife.settings.SettingsInteractor
+import com.skyfolk.quantoflife.entity.EventBase
+import com.skyfolk.quantoflife.entity.Goal
+import com.skyfolk.quantoflife.entity.GoalPresent
+import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.import.ImportInteractor
 import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
+import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.create_quant.CreateQuantDialogFragment
 import com.skyfolk.quantoflife.ui.goals.CreateGoalDialogFragment
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
+import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Calendar
 
 class NowViewModel(
     private val quantsStorageInteractor: IQuantsStorageInteractor,

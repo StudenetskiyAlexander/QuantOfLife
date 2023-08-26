@@ -29,7 +29,7 @@ class DBInteractor(context: Context) {
         Realm.init(context)
         val config = RealmConfiguration.Builder()
             .name("qol.realm")
-            .schemaVersion(10)
+            .schemaVersion(11)
             .migration(RealmMigration())
             .build()
         Realm.setDefaultConfiguration(config)

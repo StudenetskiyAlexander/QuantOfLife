@@ -37,6 +37,8 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
     private val settingsInteractor: SettingsInteractor by inject()
     private val calendar = dateTimeRepository.getCalendar()
 
+    private var isHidden = false
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -71,6 +73,14 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
                 lastCalendar.get(Calendar.DAY_OF_MONTH)
             )
                 .show()
+        }
+
+        binding.eventHiddenButton.setOnClickListener {
+            isHidden = !isHidden
+            binding.eventHiddenButton.setImageResource(when (isHidden) {
+                true -> R.drawable.quant_hidden
+                false -> R.drawable.quant_show
+            })
         }
 
         var seekBarMultiplier = 1.0
@@ -147,7 +157,8 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
                             .toDouble()
                         is QuantBase.QuantNote -> (-1).toDouble()
                     }, calendar.timeInMillis,
-                    binding.eventNote.text.toString()
+                    binding.eventNote.text.toString(),
+                    isHidden
                 ), quant.name
             )
             dismiss()
@@ -168,6 +179,12 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
             binding.buttonDelete.visibility = View.VISIBLE
             binding.eventNote.setText(it.note)
             binding.eventDate.text = it.date.toDate()
+            Log.d("skyfolk-edit", "onCreateView: ${it.isHidden}")
+            binding.eventHiddenButton.setImageResource(when (it.isHidden) {
+                true -> R.drawable.quant_hidden
+                false -> R.drawable.quant_show
+            })
+
             calendar.timeInMillis = it.date
             when (it) {
                 is EventBase.EventRated -> {

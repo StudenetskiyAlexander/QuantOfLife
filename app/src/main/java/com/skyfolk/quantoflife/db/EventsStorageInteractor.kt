@@ -1,14 +1,12 @@
 package com.skyfolk.quantoflife.db
 
-import com.skyfolk.quantoflife.QLog
-import com.skyfolk.quantoflife.entity.*
+import com.skyfolk.quantoflife.entity.EventBase
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import io.realm.Realm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Calendar
 
 class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
     fun clearDataBase() {
@@ -34,14 +32,16 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
             is EventBase.EventRated -> {
                 rate = event.rate
             }
+
             is EventBase.EventMeasure -> {
                 numericValue = event.value
             }
+
             is EventBase.EventNote -> {
             }
         }
         val eventDbElement =
-            EventDbEntity(event.quantId, event.date, rate, numericValue, event.note)
+            EventDbEntity(event.quantId, event.date, rate, numericValue, event.note, event.isHidden)
 
         dbInteractor.getDB().executeTransactionAsync({
             val existEvent = existEventOrNull(it, event)
@@ -50,6 +50,7 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
                 existEvent.rate = rate
                 existEvent.numericValue = numericValue
                 existEvent.note = event.note
+                existEvent.isHidden = event.isHidden
             } else {
                 it.insertOrUpdate(eventDbElement)
             }
@@ -94,50 +95,56 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
             .distinct()
     }
 
-    suspend fun getAllEvents(): ArrayList<EventBase> = withContext(Dispatchers.IO) {
-        val result = ArrayList<EventBase>()
+    suspend fun getAllEvents(includeHidden: Boolean = true): ArrayList<EventBase> =
+        withContext(Dispatchers.IO) {
+            val result = ArrayList<EventBase>()
 
-        dbInteractor.getDB().freeze().where(EventDbEntity::class.java).findAll()
-            .sortedBy { it.date }
-            .forEach { eventDbEntity ->
-                when {
-                    (eventDbEntity.rate != null) -> {
-                        result.add(
-                            EventBase.EventRated(
-                                eventDbEntity.id,
-                                eventDbEntity.quantId,
-                                eventDbEntity.date,
-                                eventDbEntity.note,
-                                eventDbEntity.rate!!
+            dbInteractor.getDB().freeze().where(EventDbEntity::class.java).findAll()
+                .sortedBy { it.date }
+                .filter {
+                    !it.isHidden || includeHidden
+                }
+                .forEach { eventDbEntity ->
+                    when {
+                        (eventDbEntity.rate != null) -> {
+                            result.add(
+                                EventBase.EventRated(
+                                    eventDbEntity.id,
+                                    eventDbEntity.quantId,
+                                    eventDbEntity.date,
+                                    eventDbEntity.note,
+                                    eventDbEntity.rate!!
+                                ).apply { isHidden = eventDbEntity.isHidden }
                             )
-                        )
-                    }
-                    (eventDbEntity.numericValue != null) -> {
-                        result.add(
-                            EventBase.EventMeasure(
-                                eventDbEntity.id,
-                                eventDbEntity.quantId,
-                                eventDbEntity.date,
-                                eventDbEntity.note,
-                                eventDbEntity.numericValue!!
+                        }
+
+                        (eventDbEntity.numericValue != null) -> {
+                            result.add(
+                                EventBase.EventMeasure(
+                                    eventDbEntity.id,
+                                    eventDbEntity.quantId,
+                                    eventDbEntity.date,
+                                    eventDbEntity.note,
+                                    eventDbEntity.numericValue!!
+                                ).apply { isHidden = eventDbEntity.isHidden }
                             )
-                        )
-                    }
-                    else -> {
-                        result.add(
-                            EventBase.EventNote(
-                                eventDbEntity.id,
-                                eventDbEntity.quantId,
-                                eventDbEntity.date,
-                                eventDbEntity.note
+                        }
+
+                        else -> {
+                            result.add(
+                                EventBase.EventNote(
+                                    eventDbEntity.id,
+                                    eventDbEntity.quantId,
+                                    eventDbEntity.date,
+                                    eventDbEntity.note
+                                ).apply { isHidden = eventDbEntity.isHidden }
                             )
-                        )
+                        }
                     }
                 }
-            }
 
-        return@withContext result
-    }
+            return@withContext result
+        }
 
     suspend fun alreadyHaveEvent(event: EventBase): Boolean = withContext(Dispatchers.IO) {
         return@withContext dbInteractor

@@ -79,6 +79,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     binding.maximimumWithText.visibility = View.INVISIBLE
                     binding.maximimumWithoutText.visibility = View.INVISIBLE
                 }
+
                 is StatisticFragmentState.Entries -> {
                     if (data.entries.size > 0 && data.entries.first().entries.size > 1) {
                         binding.maximimumWithText.text = getString(
@@ -100,6 +101,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                                         data.entries[0].maximumWithout.startDate.toDateWithoutHourAndMinutes()
                                     )
                                 }
+
                                 false -> {
                                     getString(
                                         R.string.statistic_maximum_without_no_one,
@@ -179,8 +181,6 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                 binding.eventSpinner.adapter = quantsSpinnerAdapter
                 binding.eventSpinner2.adapter = quantsSpinnerAdapter
 
-                Log.d("skyfolk-prefs", "onCreateView: ${(it.filter as? QuantFilterMode.OnlySelected)?.quant?.name}")
-
                 binding.modeSpinner.setSelection(it.selectedMode.toPosition(), false)
                 binding.meansureSpinner.setSelection(it.measure.toPosition(), false)
                 quantsSpinnerAdapter.getPosition(it.filter)
@@ -227,6 +227,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                             eventSpinnerColor.visibility = View.GONE
                             eventSpinnerColor2.visibility = View.GONE
                         }
+
                         GraphSelectedMode.Comparison -> {
                             yearPeriodSpinner2.visibility = View.VISIBLE
                             yearPeriodSpinnerColor.visibility = View.VISIBLE
@@ -235,6 +236,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                             eventSpinnerColor.visibility = View.GONE
                             eventSpinnerColor2.visibility = View.GONE
                         }
+
                         GraphSelectedMode.Dependence -> {
                             yearPeriodSpinner2.visibility = View.GONE
                             yearPeriodSpinnerColor.visibility = View.GONE
@@ -302,10 +304,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     position: Int,
                     id: Long
                 ) {
-                    if (!isSelectionFromTouch) {
-                        return
-                    }
-
+                    if (!isSelectionFromTouch) return
                     val newSelectedMode = GraphSelectedMode.values().find {
                         position == it.ordinal
                     }
@@ -324,9 +323,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     position: Int,
                     id: Long
                 ) {
-                    if (!isSelectionFromTouch) {
-                        return
-                    }
+                    if (!isSelectionFromTouch) return
                     val newMode = parent.getItemAtPosition(position) as GraphSelectedYearMode
                     viewModel.setYearFilter(filter = newMode)
                     isSelectionFromTouch = false
@@ -346,7 +343,8 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     if (!isSelectionFromTouch) {
                         return
                     }
-                    val newSelectedYearName = parent.getItemAtPosition(position) as GraphSelectedYearMode
+                    val newSelectedYearName =
+                        parent.getItemAtPosition(position) as GraphSelectedYearMode
                     viewModel.setYearFilter2(filter = newSelectedYearName)
                     isSelectionFromTouch = false
                 }
@@ -362,9 +360,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     position: Int,
                     id: Long
                 ) {
-                    if (!isSelectionFromTouch) {
-                        return
-                    }
+                    if (!isSelectionFromTouch) return
                     val newMode = parent.getItemAtPosition(position) as QuantFilterMode
                     viewModel.setEventFilter(1, filter = newMode)
                     isSelectionFromTouch = false

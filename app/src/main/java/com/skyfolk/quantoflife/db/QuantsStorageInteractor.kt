@@ -30,7 +30,7 @@ class QuantsStorageInteractor(private val dbInteractor: DBInteractor) : IQuantsS
         }, null)
     }
 
-    override fun getAllQuantsList(includeDeleted: Boolean): List<QuantBase> {
+    override fun getAllQuantsList(includeDeleted: Boolean, includeHidden: Boolean): List<QuantBase> {
 
         return dbInteractor
             .getDB()
@@ -39,6 +39,9 @@ class QuantsStorageInteractor(private val dbInteractor: DBInteractor) : IQuantsS
             .sortedWith(quantComparator)
             .filter {
                 !it.isDeleted || includeDeleted
+            }
+            .filter {
+                !it.isHidden || includeHidden
             }
             .map {
                 it.toQuantBase()

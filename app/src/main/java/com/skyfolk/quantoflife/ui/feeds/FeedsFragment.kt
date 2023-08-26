@@ -56,49 +56,48 @@ class FeedsFragment : Fragment() {
 
         lifecycleScope.launch {
             viewModel.singleLifeEvent.observe(
-                viewLifecycleOwner,
-                { event ->
-                    when (event) {
-                        is FeedsFragmentSingleLifeEvent.ShowEditEventDialog -> {
-                            val dialog = CreateEventDialogFragment(event.quant, event.event)
-                            dialog.setDialogListener(object :
-                                CreateEventDialogFragment.DialogListener {
-                                override fun onConfirm(event: EventBase, name: String) {
-                                    val snackBar = Snackbar.make(
-                                        requireActivity().findViewById(android.R.id.content),
-                                        "Событие '${name}' изменено",
-                                        Snackbar.LENGTH_LONG
-                                    )
-                                    snackBar.setAction("Отмена") {
-                                    }
-                                    snackBar.setOnHideByTimeout {
-                                        viewModel.eventEdited(event)
-                                    }
-                                    snackBar.show()
+                viewLifecycleOwner
+            ) { event ->
+                when (event) {
+                    is FeedsFragmentSingleLifeEvent.ShowEditEventDialog -> {
+                        val dialog = CreateEventDialogFragment(event.quant, event.event)
+                        dialog.setDialogListener(object :
+                            CreateEventDialogFragment.DialogListener {
+                            override fun onConfirm(event: EventBase, name: String) {
+                                val snackBar = Snackbar.make(
+                                    requireActivity().findViewById(android.R.id.content),
+                                    "Событие '${name}' изменено",
+                                    Snackbar.LENGTH_LONG
+                                )
+                                snackBar.setAction("Отмена") {
                                 }
+                                snackBar.setOnHideByTimeout {
+                                    viewModel.eventEdited(event)
+                                }
+                                snackBar.show()
+                            }
 
-                                override fun onDecline() {
-                                }
+                            override fun onDecline() {
+                            }
 
-                                override fun onDelete(event: EventBase, name: String) {
-                                    val snackBar = Snackbar.make(
-                                        requireActivity().findViewById(android.R.id.content),
-                                        "Событие '${name}' удалено",
-                                        Snackbar.LENGTH_LONG
-                                    )
-                                    snackBar.setAction("Отмена") {
-                                    }
-                                    snackBar.setOnHideByTimeout {
-                                        viewModel.deleteEvent(event)
-                                    }
-                                    snackBar.show()
+                            override fun onDelete(event: EventBase, name: String) {
+                                val snackBar = Snackbar.make(
+                                    requireActivity().findViewById(android.R.id.content),
+                                    "Событие '${name}' удалено",
+                                    Snackbar.LENGTH_LONG
+                                )
+                                snackBar.setAction("Отмена") {
                                 }
-                            })
-                            dialog.show(requireActivity().supportFragmentManager, dialog.tag)
-                        }
+                                snackBar.setOnHideByTimeout {
+                                    viewModel.deleteEvent(event)
+                                }
+                                snackBar.show()
+                            }
+                        })
+                        dialog.show(requireActivity().supportFragmentManager, dialog.tag)
                     }
                 }
-            )
+            }
 
             viewModel.state.onEach { state: FeedsFragmentState ->
                 // Descriptions

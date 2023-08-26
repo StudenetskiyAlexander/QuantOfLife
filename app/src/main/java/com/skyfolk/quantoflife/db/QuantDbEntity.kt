@@ -21,7 +21,8 @@ open class QuantDbEntity(
     var isDeleted: Boolean = false,
     var usageCount: Int = 0,
     var minSize: Int = 0,
-    var maxSize: Int = 0
+    var maxSize: Int = 0,
+    var isHidden: Boolean = false
 ) : RealmObject() {
     companion object {
         fun toQuantDbEntity(quant: QuantBase): QuantDbEntity {

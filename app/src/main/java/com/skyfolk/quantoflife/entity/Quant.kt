@@ -14,7 +14,9 @@ sealed class QuantBase(
     @Transient
     open var description: String,
     @Transient
-    open var usageCount: Int = 0
+    open var usageCount: Int = 0,
+    @Transient
+    open var isHidden: Boolean = false
 ) {
     data class QuantNote(
         override var id: String = UUID.randomUUID().toString(),
@@ -81,10 +83,10 @@ sealed class QuantBase(
         }
     }
 
-    fun toEvent(eventId: String? = null, rate: Double, date: Long, note: String): EventBase {
-        when (this) {
+    fun toEvent(eventId: String? = null, rate: Double, date: Long, note: String, isHidden: Boolean): EventBase {
+        return when (this) {
             is QuantRated -> {
-                return EventBase.EventRated(
+                EventBase.EventRated(
                     eventId ?: UUID.randomUUID().toString(),
                     this.id,
                     date,
@@ -93,7 +95,7 @@ sealed class QuantBase(
                 )
             }
             is QuantMeasure -> {
-                return EventBase.EventMeasure(
+                EventBase.EventMeasure(
                     eventId ?: UUID.randomUUID().toString(),
                     this.id,
                     date,
@@ -102,13 +104,15 @@ sealed class QuantBase(
                 )
             }
             is QuantNote -> {
-                return EventBase.EventNote(
+                EventBase.EventNote(
                     eventId ?: UUID.randomUUID().toString(),
                     this.id,
                     date,
                     note
                 )
             }
+        }.apply {
+            this.isHidden = isHidden
         }
     }
 

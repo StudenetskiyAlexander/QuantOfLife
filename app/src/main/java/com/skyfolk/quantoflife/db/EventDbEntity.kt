@@ -11,6 +11,7 @@ open class EventDbEntity(
     var rate: Double? = null,
     var numericValue: Double? = null,
     var note: String = "",
+    var isHidden: Boolean = false,
     @PrimaryKey
     var id: String = UUID.randomUUID().toString(),
 ) : RealmObject()

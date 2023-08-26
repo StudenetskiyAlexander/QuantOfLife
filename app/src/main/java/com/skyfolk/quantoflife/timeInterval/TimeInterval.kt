@@ -5,7 +5,7 @@ import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import java.util.*
 
 sealed class TimeInterval : TypedSealedClass {
-    override val type = this.javaClass.name
+    override val type: String = this.javaClass.name
 
     object Today : TimeInterval()
     object Week : TimeInterval()

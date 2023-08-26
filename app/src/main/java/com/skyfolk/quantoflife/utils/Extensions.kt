@@ -67,7 +67,7 @@ fun Calendar.getStartDateCalendar(timeInterval: TimeInterval, startDayTime: Long
         is TimeInterval.Selected -> {
             calendar.timeInMillis = timeInterval.start
         }
-        TimeInterval.Year -> {
+        is TimeInterval.Year -> {
             calendar[Calendar.DAY_OF_YEAR] = 1
         }
     }
@@ -114,7 +114,7 @@ fun Calendar.getEndDateCalendar(timeInterval: TimeInterval, startDayTime: Long):
             calendar.timeInMillis = timeInterval.end
             calendar[Calendar.DAY_OF_MONTH]++
         }
-        TimeInterval.Year -> {
+        is TimeInterval.Year -> {
             calendar[Calendar.YEAR]++
             calendar[Calendar.DAY_OF_YEAR] = 1
         }

@@ -16,8 +16,8 @@ class IntervalAxisValueFormatter(
         val time: Long = timeInterval.getPeriod(firstDate, value.toInt(), settingsInteractor.startDayTime).start
 
         return when (timeInterval) {
-            TimeInterval.Month -> time.toMonthAndYear()
-            TimeInterval.Today -> time.toMediumDate()
+            is TimeInterval.Month -> time.toMonthAndYear()
+            is TimeInterval.Today -> time.toMediumDate()
             else -> "c ${time.toMediumDate()}"
         }
     }

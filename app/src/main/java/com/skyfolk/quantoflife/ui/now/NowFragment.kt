@@ -31,12 +31,6 @@ import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener
 import uk.co.markormesher.android_fab.SpeedDialMenuItem
 import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener
 
-class TestSkyfolk {
-
-    fun pr() {
-        Log.d("skyfolk-prefs", "pr: ")
-    }
-}
 class NowFragment : Fragment() {
     private val viewModel: NowViewModel by viewModel()
     private val settingsInteractor: SettingsInteractor by inject()
