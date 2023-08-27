@@ -11,7 +11,8 @@ sealed class EventListItem {
         val note: String,
         val value: Double?,
         val valueType: ValueTypeDisplayable,
-        val bonuses: ArrayList<QuantBonusBase.QuantBonusRated>?
+        val bonuses: ArrayList<QuantBonusBase.QuantBonusRated>?,
+        val isHidden: Boolean
     ): EventListItem()
 
     data class SeparatorLine(
@@ -97,7 +98,8 @@ fun EventBase.toDisplayableEvents(allQuants: List<QuantBase>): EventListItem.Eve
                 is EventBase.EventNote -> ValueTypeDisplayable.NOTHING
                 is EventBase.EventRated -> ValueTypeDisplayable.STARS
             },
-            bonuses = bonuses
+            bonuses = bonuses,
+            isHidden = isHidden
         )
     }
     return null

@@ -433,13 +433,27 @@ fun EventItem(
                     LocalContext.current.packageName
                 )
             }
-            Image(
-                painter = painterResource(imageResource),
-                contentDescription = "event_icon",
-                modifier = Modifier
-                    .height(50.dp)
-                    .width(50.dp)
-            )
+            Box(modifier = Modifier
+                .height(50.dp)
+                .width(50.dp)) {
+                Image(
+                    painter = painterResource(imageResource),
+                    contentDescription = "event_icon",
+                    modifier = Modifier
+                        .height(50.dp)
+                        .width(50.dp)
+                )
+                if (event.isHidden) {
+                    Image(
+                        painter = painterResource(R.drawable.quant_hidden),
+                        contentDescription = "hidden",
+                        modifier = Modifier
+                            .padding(start = 5.dp, top = 5.dp)
+                            .height(20.dp)
+                            .width(20.dp)
+                    )
+                }
+            }
             Column(
                 modifier = Modifier
                     .padding(horizontal = 5.dp)
@@ -508,7 +522,7 @@ fun EventItem(
                     }
                 }
 
-                Text(event.note, fontSize = 12.sp, maxLines = 3)
+                Text(event.note, fontSize = 12.sp, maxLines = 4)
             }
         }
     }
@@ -525,8 +539,9 @@ fun EventItemPreview() {
         date = Calendar.getInstance().timeInMillis,
         note = "Заметка. Много строк - очень-очень длинный текст заметки-примечания для события, где описывается что-то прям важное и нужное.",
         value = 4.0,
-        valueType = ValueTypeDisplayable.NUMBER,
-        bonuses = arrayListOf()
+        valueType = ValueTypeDisplayable.STARS,
+        bonuses = arrayListOf(),
+        isHidden = true
     )
     EventItem(event = event, onItemClick = {})
 }

@@ -154,14 +154,9 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    fun openFile() {
+    private fun openFile() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-//            addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-
-            // Optionally, specify a URI for the file that should appear in the
-            // system file picker when it loads.
-//            putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri)
         }
 
         startActivityForResult(intent, pickFileReqCode)
@@ -170,10 +165,6 @@ class SettingsFragment : Fragment() {
     private val onTimeSelected = TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
         val result = ((hourOfDay * 60 * 60 * 1000) + (minute * 60 * 1000)).toLong()
         viewModel.setStartDayTime(result)
-    }
-
-    companion object {
-        const val MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 989
     }
 
     sealed class SettingsFragmentToast(val textResourceId: Int) {
