@@ -16,10 +16,18 @@ import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.EventsListLoading.Companion.updateStateToLoading
 import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.LoadingEventsListCompleted.Companion.updateStateToCompleted
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
+import com.skyfolk.quantoflife.utils.getEndDateCalendar
+import com.skyfolk.quantoflife.utils.getStartDateCalendar
+import com.skyfolk.quantoflife.utils.toCalendar
+import com.skyfolk.quantoflife.utils.toDate
+import com.skyfolk.quantoflife.utils.toDateWithoutHourAndMinutes
+import com.skyfolk.quantoflife.utils.toShortDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.util.Calendar
 
 class FeedsViewModel(
     private val eventsStorageInteractor: EventsStorageInteractor,
@@ -55,7 +63,7 @@ class FeedsViewModel(
                 settingsInteractor.startDayTime
             )
 
-            val listOfEvents = eventsStorageInteractor.getAllEvents(true)
+            val listOfEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden)
                 .filter { it.date in interval }
                 .filter {
                     it.note.contains(searchText, ignoreCase = true)
@@ -98,7 +106,7 @@ class FeedsViewModel(
                 _selectedEventFilter = selectedEventFilter,
                 _selectedTextFilter = searchText,
                 _quantCategoryName = settingsInteractor.getCategoryNames(),
-                _listOfEvents = listOfEvents.mapNotNull { it.toDisplayableEvents(allQuantsFound) },
+                _listOfEvents = addSeparatorLine(listOfEvents, allQuantsFound),
                 _totalPhysicalFound = totalPhysicalFound,
                 _totalEmotionalFound = totalEmotionalFound,
                 _totalEvolutionFound = totalEvolutionFound,
@@ -156,6 +164,40 @@ class FeedsViewModel(
             settingsInteractor.feedsTimeIntervalSelectedStart,
             settingsInteractor.feedsTimeIntervalSelectedEnd
         )
+    }
+
+    private fun addSeparatorLine(
+        events: List<EventBase>,
+        allQuantsFound: List<QuantBase>
+    ): List<EventListItem> {
+        val result = mutableListOf<EventListItem>()
+        var lastEventCalendar: Calendar? = null
+        events.forEach {
+            val newDayCalendar = it.date.toCalendar().getStartDateCalendar(
+                TimeInterval.Today,
+                settingsInteractor.startDayTime
+            )
+            if (lastEventCalendar != null && newDayCalendar[Calendar.DAY_OF_YEAR] != lastEventCalendar!![Calendar.DAY_OF_YEAR]) {
+                result.add(
+                    EventListItem.SeparatorLine(
+                        lastEventCalendar!!.timeInMillis.toDateWithoutHourAndMinutes()
+                    )
+                )
+            }
+            lastEventCalendar = newDayCalendar
+            it.toDisplayableEvents(allQuantsFound)?.let { event ->
+                result.add(event)
+            }
+        }
+        val firstDate = lastEventCalendar?.getStartDateCalendar(
+            TimeInterval.Today,
+            settingsInteractor.startDayTime
+        )
+        firstDate?.timeInMillis?.toDateWithoutHourAndMinutes()?.let {
+            result.add(EventListItem.SeparatorLine(it))
+        }
+
+        return result
     }
 }
 

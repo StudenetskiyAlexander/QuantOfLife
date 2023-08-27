@@ -2,26 +2,44 @@ package com.skyfolk.quantoflife.ui.feeds
 
 import android.app.DatePickerDialog
 import android.content.Context
-import android.util.Log
 import android.widget.DatePicker
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.material.Card
+import androidx.compose.material.Divider
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-//import androidx.compose.ui.layout.RelocationRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -35,7 +53,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.R
-import com.skyfolk.quantoflife.entity.EventDisplayable
+import com.skyfolk.quantoflife.entity.EventListItem
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.entity.ValueTypeDisplayable
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
@@ -48,7 +66,8 @@ import com.skyfolk.quantoflife.utils.toDate
 import com.skyfolk.quantoflife.utils.toDateWithoutHourAndMinutes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun TotalValue(
@@ -368,7 +387,29 @@ fun FilterBlock(
 }
 
 @Composable
-fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) {
+fun EventSeparatorLine(
+    separatorLine: EventListItem.SeparatorLine
+) {
+    Card(
+        backgroundColor = Orange,
+        modifier = Modifier
+            .wrapContentHeight()
+            .fillMaxWidth()
+            .padding(5.dp)
+    ) {
+        Text(
+            separatorLine.text, modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            fontStyle = FontStyle.Italic
+        )
+    }
+}
+
+@Composable
+fun EventItem(
+    event: EventListItem.EventDisplayable,
+    onItemClick: (EventListItem.EventDisplayable) -> Unit
+) {
     Card(
         backgroundColor = Orange,
         modifier = Modifier
@@ -436,12 +477,15 @@ fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) 
                                     QuantCategory.Physical -> {
                                         physicalBonus += bonus.baseBonus + bonus.bonusForEachRating * event.value
                                     }
+
                                     QuantCategory.Emotion -> {
                                         emotionBonus += bonus.baseBonus + bonus.bonusForEachRating * event.value
                                     }
+
                                     QuantCategory.Evolution -> {
                                         evolutionBonus += bonus.baseBonus + bonus.bonusForEachRating * event.value
                                     }
+
                                     else -> {}
                                 }
                             }
@@ -454,10 +498,12 @@ fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) 
                                 }", fontSize = 14.sp, fontStyle = FontStyle.Italic, maxLines = 1
                             )
                         }
+
                         ValueTypeDisplayable.NUMBER -> {
                             // TODO value
                             Text("= ${event.value}")
                         }
+
                         ValueTypeDisplayable.NOTHING -> {}
                     }
                 }
@@ -471,7 +517,7 @@ fun EventItem(event: EventDisplayable, onItemClick: (EventDisplayable) -> Unit) 
 @Preview
 @Composable
 fun EventItemPreview() {
-    val event = EventDisplayable(
+    val event = EventListItem.EventDisplayable(
         id = "id000",
         name = "Event name",
         quantId = "quantId",
@@ -485,16 +531,27 @@ fun EventItemPreview() {
     EventItem(event = event, onItemClick = {})
 }
 
+@Preview
 @Composable
-fun EventsList(modifier: Modifier, events: List<EventDisplayable>, onItemClick: (String) -> Unit) {
+fun EventSeparatorLinePreview() {
+    EventSeparatorLine(separatorLine = EventListItem.SeparatorLine("new day"))
+}
+
+@Composable
+fun EventsList(modifier: Modifier, events: List<EventListItem>, onItemClick: (String) -> Unit) {
     LazyColumn(modifier = modifier) {
         events.map {
             item {
-                EventItem(
-                    event = it,
-                    onItemClick = {
-                        onItemClick(it.id)
-                    })
+                when (it) {
+                    is EventListItem.EventDisplayable -> EventItem(
+                        event = it,
+                        onItemClick = {
+                            onItemClick(it.id)
+                        })
+
+                    is EventListItem.SeparatorLine -> EventSeparatorLine(it)
+                }
+
             }
         }
     }

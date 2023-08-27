@@ -1,6 +1,6 @@
 package com.skyfolk.quantoflife.ui.feeds
 
-import com.skyfolk.quantoflife.entity.EventDisplayable
+import com.skyfolk.quantoflife.entity.EventListItem
 import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
@@ -49,7 +49,7 @@ sealed class FeedsFragmentState(
         override var selectedQuantFilterMode: QuantFilterMode,
         override var selectedTextFilter: String,
         override val quantCategoryNames: List<Pair<QuantCategory, String>>,
-        val listOfEvents: List<EventDisplayable>,
+        val listOfEvents: List<EventListItem>,
         val totalPhysicalFound: Double,
         val totalEmotionalFound: Double,
         val totalEvolutionFound: Double,
@@ -69,7 +69,7 @@ sealed class FeedsFragmentState(
                 _selectedEventFilter: QuantFilterMode,
                 _selectedTextFilter: String,
                 _quantCategoryName: ArrayList<Pair<QuantCategory, String>>,
-                _listOfEvents: List<EventDisplayable>,
+                _listOfEvents: List<EventListItem>,
                 _totalPhysicalFound: Double,
                 _totalEmotionalFound: Double,
                 _totalEvolutionFound: Double,

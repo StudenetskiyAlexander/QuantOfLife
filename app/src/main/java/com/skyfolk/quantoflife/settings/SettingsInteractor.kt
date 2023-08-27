@@ -56,6 +56,7 @@ class SettingsInteractor(private val context: Context) {
     var feedsTimeIntervalSelectedEnd by preferences.long(0)
 
     var isOnboardingComplete by preferences.boolean(true)
+    var showHidden by preferences.boolean(false)
     var startDayTime by preferences.long(0)
 
     var categoryNames = mutableMapOf(

@@ -1,16 +1,25 @@
 package com.skyfolk.quantoflife.entity
 
-data class EventDisplayable(
-    val id: String,
-    val name: String,
-    val quantId: String,
-    val icon: String,
-    val date: Long,
-    val note: String,
-    val value: Double?,
-    val valueType: ValueTypeDisplayable,
-    val bonuses: ArrayList<QuantBonusBase.QuantBonusRated>?
-)
+sealed class EventListItem {
+
+    data class EventDisplayable(
+        val id: String,
+        val name: String,
+        val quantId: String,
+        val icon: String,
+        val date: Long,
+        val note: String,
+        val value: Double?,
+        val valueType: ValueTypeDisplayable,
+        val bonuses: ArrayList<QuantBonusBase.QuantBonusRated>?
+    ): EventListItem()
+
+    data class SeparatorLine(
+        val text: String
+    ): EventListItem()
+}
+
+
 
 enum class ValueTypeDisplayable {
     STARS, NUMBER, NOTHING
@@ -65,7 +74,7 @@ sealed class EventBase(
     abstract fun copy(): EventBase
 }
 
-fun EventBase.toDisplayableEvents(allQuants: List<QuantBase>): EventDisplayable? {
+fun EventBase.toDisplayableEvents(allQuants: List<QuantBase>): EventListItem.EventDisplayable? {
 
     allQuants.firstOrNull { it.id == this.quantId }?.let {
         val value = when {
@@ -75,7 +84,7 @@ fun EventBase.toDisplayableEvents(allQuants: List<QuantBase>): EventDisplayable?
         }
 
         val bonuses = if (it is QuantBase.QuantRated) it.bonuses else null
-        return EventDisplayable(
+        return EventListItem.EventDisplayable(
             id = this.id,
             name = it.name,
             quantId = this.quantId,
