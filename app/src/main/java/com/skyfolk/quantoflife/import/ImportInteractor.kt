@@ -29,7 +29,10 @@ class ImportInteractor(
             oldEvents.add(oldEvent.copy())
         }
         val oldQuants = ArrayList<QuantBase>()
-        for (oldQuant in quantsStorageInteractor.getAllQuantsList(true)) {
+        for (oldQuant in quantsStorageInteractor.getAllQuantsList(
+            includeDeleted = true,
+            includeHidden = true
+        )) {
             quantsImported++
             oldQuants.add(oldQuant.copy())
         }
@@ -38,7 +41,7 @@ class ImportInteractor(
         copyBundledRealmFile(inputStream, mainPath)
 
         quantsImported =
-            quantsStorageInteractor.getAllQuantsList(true).size - quantsImported
+            quantsStorageInteractor.getAllQuantsList(includeDeleted = true, includeHidden = true).size - quantsImported
         eventsImported = eventsStorageInteractor.getAllEvents().size - eventsImported
 
         //Merge

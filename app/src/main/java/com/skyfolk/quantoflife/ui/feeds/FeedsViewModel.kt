@@ -37,7 +37,7 @@ class FeedsViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow<FeedsFragmentState>(
         FeedsFragmentState.EventsListLoading(
-            listOfQuants = quantsStorageInteractor.getAllQuantsList(false),
+            listOfQuants = quantsStorageInteractor.getAllQuantsList(false, false),
             selectedTimeInterval = settingsInteractor.feedsTimeIntervalMode,
             selectedQuantFilterMode = settingsInteractor.feedsQuantFilterMode,
             selectedTextFilter = settingsInteractor.feedsSearchText,
@@ -77,7 +77,10 @@ class FeedsViewModel(
 
             Log.d("skyfolk-timer", "runSearchEnd: ${System.currentTimeMillis()}")
 
-            val allQuantsFound = quantsStorageInteractor.getAllQuantsList(false)
+            val allQuantsFound = quantsStorageInteractor.getAllQuantsList(
+                includeDeleted = false,
+                includeHidden = false
+            )
 
             val totalPhysicalFound = getTotal(
                 allQuantsFound,

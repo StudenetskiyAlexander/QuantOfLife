@@ -57,6 +57,7 @@ class SettingsInteractor(private val context: Context) {
 
     var isOnboardingComplete by preferences.boolean(true)
     var showHidden by preferences.boolean(false)
+    var lastLoginTime by preferences.long(0L)
     var startDayTime by preferences.long(0)
 
     var categoryNames = mutableMapOf(

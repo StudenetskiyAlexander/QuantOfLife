@@ -1,6 +1,7 @@
 package com.skyfolk.quantoflife
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -11,11 +12,18 @@ import com.skyfolk.quantoflife.settings.SettingsInteractor
 import org.koin.android.ext.android.inject
 import java.util.concurrent.Executor
 
+private const val TIME_BETWEEN_LOGIN = 5 * 60 * 1000
+
 class MainActivity : AppCompatActivity() {
     private val settingsInteractor: SettingsInteractor by inject()
     private lateinit var executor: Executor
-    private lateinit var biometricPrompt: BiometricPrompt
-    private lateinit var promptInfo: BiometricPrompt.PromptInfo
+    private lateinit var biometricPrompt : BiometricPrompt
+
+    private val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        .setTitle("Войдите с помощью биометрии")
+        .setSubtitle("Квант Жизни")
+        .setNegativeButtonText("Отмена")
+        .build()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +49,7 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     super.onAuthenticationSucceeded(result)
                     settingsInteractor.showHidden = true
+                    settingsInteractor.lastLoginTime = System.currentTimeMillis()
                 }
 
                 override fun onAuthenticationFailed() {
@@ -48,17 +57,17 @@ class MainActivity : AppCompatActivity() {
                     settingsInteractor.showHidden = false
                 }
             })
-
-        promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Войдите с помощью биометрии")
-            .setSubtitle("Квант Жизни")
-            .setNegativeButtonText("Отмена")
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
-
 //        if (!settingsInteractor.isOnboardingComplete) {
 //            startActivity(Intent(baseContext, OnBoardingActivity::class.java))
 //        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        Log.d("skyfolk-bio", "onResume: ${System.currentTimeMillis() - settingsInteractor.lastLoginTime}")
+        if (System.currentTimeMillis() - settingsInteractor.lastLoginTime > TIME_BETWEEN_LOGIN) {
+            biometricPrompt.authenticate(promptInfo)
+        }
     }
 }

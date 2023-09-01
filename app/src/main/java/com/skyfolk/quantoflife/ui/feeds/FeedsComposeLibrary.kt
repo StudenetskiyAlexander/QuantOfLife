@@ -127,7 +127,7 @@ fun TotalValues(state: FeedsFragmentState, modifier: Modifier) {
     }
     val subtitle = when (state) {
         is FeedsFragmentState.EventsListLoading -> "...."
-        is FeedsFragmentState.LoadingEventsListCompleted -> "Итого за период найдено ${state.listOfEvents.size} событий."
+        is FeedsFragmentState.LoadingEventsListCompleted -> "Итого за период найдено ${state.listOfEvents.filter { it.isEvent }.size} событий."
     }
     val totalStarFound: Double? = when (state) {
         is FeedsFragmentState.EventsListLoading -> null
@@ -433,9 +433,11 @@ fun EventItem(
                     LocalContext.current.packageName
                 )
             }
-            Box(modifier = Modifier
-                .height(50.dp)
-                .width(50.dp)) {
+            Box(
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(50.dp)
+            ) {
                 Image(
                     painter = painterResource(imageResource),
                     contentDescription = "event_icon",

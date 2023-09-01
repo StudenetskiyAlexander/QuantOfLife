@@ -1,6 +1,6 @@
 package com.skyfolk.quantoflife.entity
 
-sealed class EventListItem {
+sealed class EventListItem(open val isEvent: Boolean = true) {
 
     data class EventDisplayable(
         val id: String,
@@ -17,7 +17,7 @@ sealed class EventListItem {
 
     data class SeparatorLine(
         val text: String
-    ): EventListItem()
+    ): EventListItem(isEvent = false)
 }
 
 
