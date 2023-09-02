@@ -1,8 +1,9 @@
-package com.skyfolk.quantoflife.ui.feeds
+package com.skyfolk.quantoflife.ui.feeds.entity
 
 import com.skyfolk.quantoflife.entity.EventListItem
 import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.entity.QuantCategory
+import com.skyfolk.quantoflife.shared.presentation.state.ScreenState
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,7 @@ sealed class FeedsFragmentState(
     open var selectedQuantFilterMode: QuantFilterMode,
     open var selectedTextFilter: String,
     open val quantCategoryNames: List<Pair<QuantCategory, String>>
-) {
+): ScreenState {
     data class EventsListLoading(
         override val listOfQuants: List<QuantBase>,
         override var selectedTimeInterval: TimeInterval,

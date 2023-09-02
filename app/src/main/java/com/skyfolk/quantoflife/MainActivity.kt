@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
 
         Log.d("skyfolk-bio", "onResume: ${System.currentTimeMillis() - settingsInteractor.lastLoginTime}")
-        if (System.currentTimeMillis() - settingsInteractor.lastLoginTime > TIME_BETWEEN_LOGIN) {
+        if (settingsInteractor.showHidden && System.currentTimeMillis() - settingsInteractor.lastLoginTime > TIME_BETWEEN_LOGIN) {
             biometricPrompt.authenticate(promptInfo)
         }
     }

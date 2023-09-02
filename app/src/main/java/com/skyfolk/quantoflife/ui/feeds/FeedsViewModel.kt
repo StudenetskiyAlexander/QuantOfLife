@@ -11,22 +11,23 @@ import com.skyfolk.quantoflife.feeds.getStarTotal
 import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.settings.SettingsInteractor
+import com.skyfolk.quantoflife.shared.presentation.vm.BaseViewModel
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
-import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.EventsListLoading.Companion.updateStateToLoading
-import com.skyfolk.quantoflife.ui.feeds.FeedsFragmentState.LoadingEventsListCompleted.Companion.updateStateToCompleted
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.*
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentSingleLifeEvent
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentState
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentState.EventsListLoading.Companion.updateStateToLoading
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentState.LoadingEventsListCompleted.Companion.updateStateToCompleted
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
-import com.skyfolk.quantoflife.utils.getEndDateCalendar
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import com.skyfolk.quantoflife.utils.toCalendar
-import com.skyfolk.quantoflife.utils.toDate
 import com.skyfolk.quantoflife.utils.toDateWithoutHourAndMinutes
-import com.skyfolk.quantoflife.utils.toShortDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
 import java.util.Calendar
 
 class FeedsViewModel(
@@ -34,132 +35,35 @@ class FeedsViewModel(
     private val settingsInteractor: SettingsInteractor,
     private val quantsStorageInteractor: IQuantsStorageInteractor,
     private val timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper
-) : ViewModel() {
+) : BaseViewModel<FeedsFragmentActions, FeedsFragmentState, FeedsFragmentSingleLifeEvent>() {
+
     private val _state = MutableStateFlow<FeedsFragmentState>(
         FeedsFragmentState.EventsListLoading(
-            listOfQuants = quantsStorageInteractor.getAllQuantsList(false, false),
+            listOfQuants = quantsStorageInteractor.getAllQuantsList(
+                includeDeleted = false,
+                includeHidden = false
+            ),
             selectedTimeInterval = settingsInteractor.feedsTimeIntervalMode,
             selectedQuantFilterMode = settingsInteractor.feedsQuantFilterMode,
             selectedTextFilter = settingsInteractor.feedsSearchText,
             quantCategoryNames = settingsInteractor.getCategoryNames()
         )
     )
-    val state: StateFlow<FeedsFragmentState> = _state.asStateFlow()
+    override val state: StateFlow<FeedsFragmentState> = _state.asStateFlow()
 
     private val _singleLifeEvent = SingleLiveEvent<FeedsFragmentSingleLifeEvent>()
-    val singleLifeEvent: LiveData<FeedsFragmentSingleLifeEvent> get() = _singleLifeEvent
+    override val singleLifeEvent: LiveData<FeedsFragmentSingleLifeEvent> get() = _singleLifeEvent
 
-    fun runSearch() {
-        Log.d("skyfolk-timer", "runSearchStart: ${System.currentTimeMillis()}")
-
-        viewModelScope.launch {
-            updateStateToLoading(_state)
-
-            val selectedTimeInterval = _state.value.selectedTimeInterval
-            val selectedEventFilter = _state.value.selectedQuantFilterMode
-            val searchText = _state.value.selectedTextFilter
-            val interval = timeIntervalToPeriodInMillisMapper.invoke(
-                selectedTimeInterval,
-                settingsInteractor.startDayTime
-            )
-
-            val listOfEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden)
-                .filter { it.date in interval }
-                .filter {
-                    it.note.contains(searchText, ignoreCase = true)
-                }
-                .filter {
-                    when (selectedEventFilter) {
-                        is QuantFilterMode.All -> true
-                        is QuantFilterMode.OnlySelected -> it.quantId == selectedEventFilter.quant.id
-                    }
-                }
-
-            Log.d("skyfolk-timer", "runSearchEnd: ${System.currentTimeMillis()}")
-
-            val allQuantsFound = quantsStorageInteractor.getAllQuantsList(
-                includeDeleted = false,
-                includeHidden = false
-            )
-
-            val totalPhysicalFound = getTotal(
-                allQuantsFound,
-                listOfEvents,
-                QuantCategory.Physical
-            )
-
-            val totalEmotionalFound = getTotal(
-                allQuantsFound,
-                listOfEvents,
-                QuantCategory.Emotion
-            )
-
-            val totalEvolutionFound = getTotal(
-                allQuantsFound,
-                listOfEvents,
-                QuantCategory.Evolution
-            )
-
-            val totalFound = getTotal(allQuantsFound, listOfEvents)
-            val starFound = getStarTotal(allQuantsFound, listOfEvents)
-
-            updateStateToCompleted(
-                _state,
-                _timeInterval = selectedTimeInterval,
-                _selectedEventFilter = selectedEventFilter,
-                _selectedTextFilter = searchText,
-                _quantCategoryName = settingsInteractor.getCategoryNames(),
-                _listOfEvents = addSeparatorLine(listOfEvents, allQuantsFound),
-                _totalPhysicalFound = totalPhysicalFound,
-                _totalEmotionalFound = totalEmotionalFound,
-                _totalEvolutionFound = totalEvolutionFound,
-                _totalFound = totalFound,
-                _totalStarFound = starFound
-            )
-
-            Log.d("skyfolk-timer", "runSearchUpdateStateEnd: ${System.currentTimeMillis()}")
+    override fun proceedAction(action: FeedsFragmentActions) {
+        when (action) {
+            is EditEventAction -> editEvent(action)
+            is SetSelectedQuantFilterModeAction -> setSelectedQuantFilterMode(action)
+            is SetTimeIntervalStateAction -> setTimeIntervalState(action)
+            RunSearchAction -> runSearch()
+            is SetSearchTextAction -> setSearchText(action)
+            is DeleteEventAction -> deleteEvent(action)
+            is EventEditedAction -> eventEdited(action)
         }
-    }
-
-    fun setTimeIntervalState(timeInterval: TimeInterval) {
-        settingsInteractor.feedsTimeIntervalMode = timeInterval
-        if (timeInterval is TimeInterval.Selected) {
-            settingsInteractor.feedsTimeIntervalSelectedStart = timeInterval.start
-            settingsInteractor.feedsTimeIntervalSelectedEnd = timeInterval.end
-        }
-        _state.value.selectedTimeInterval = timeInterval
-        runSearch()
-    }
-
-    fun setSearchText(searchText: String) {
-        settingsInteractor.feedsSearchText = searchText
-        _state.value.selectedTextFilter = searchText
-        runSearch()
-    }
-
-    fun setSelectedQuantFilterMode(mode: QuantFilterMode) {
-        settingsInteractor.feedsQuantFilterMode = mode
-        _state.value.selectedQuantFilterMode = mode
-        runSearch()
-    }
-
-    fun editEvent(eventId: String) {
-        viewModelScope.launch {
-            eventsStorageInteractor.getAllEvents().firstOrNull { it.id == eventId }?.let { event ->
-                quantsStorageInteractor.getQuantById(event.quantId)?.let { quant ->
-                    _singleLifeEvent.value =
-                        FeedsFragmentSingleLifeEvent.ShowEditEventDialog(quant, event)
-                }
-            }
-        }
-    }
-
-    fun eventEdited(event: EventBase) {
-        eventsStorageInteractor.addEventToDB(event) { runSearch() }
-    }
-
-    fun deleteEvent(event: EventBase) {
-        eventsStorageInteractor.deleteEvent(event) { runSearch() }
     }
 
     fun getStoredSelectedTimeInterval(): LongRange {
@@ -167,6 +71,112 @@ class FeedsViewModel(
             settingsInteractor.feedsTimeIntervalSelectedStart,
             settingsInteractor.feedsTimeIntervalSelectedEnd
         )
+    }
+
+    private fun runSearch() = viewModelScope.launch {
+        updateStateToLoading(_state)
+
+        val selectedTimeInterval = _state.value.selectedTimeInterval
+        val selectedEventFilter = _state.value.selectedQuantFilterMode
+        val searchText = _state.value.selectedTextFilter
+        val interval = timeIntervalToPeriodInMillisMapper.invoke(
+            selectedTimeInterval,
+            settingsInteractor.startDayTime
+        )
+
+        val listOfEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden)
+            .filter { it.date in interval }
+            .filter {
+                it.note.contains(searchText, ignoreCase = true)
+            }
+            .filter {
+                when (selectedEventFilter) {
+                    is QuantFilterMode.All -> true
+                    is QuantFilterMode.OnlySelected -> it.quantId == selectedEventFilter.quant.id
+                }
+            }
+
+        val allQuantsFound = quantsStorageInteractor.getAllQuantsList(
+            includeDeleted = false,
+            includeHidden = false
+        )
+
+        val totalPhysicalFound = getTotal(
+            allQuantsFound,
+            listOfEvents,
+            QuantCategory.Physical
+        )
+
+        val totalEmotionalFound = getTotal(
+            allQuantsFound,
+            listOfEvents,
+            QuantCategory.Emotion
+        )
+
+        val totalEvolutionFound = getTotal(
+            allQuantsFound,
+            listOfEvents,
+            QuantCategory.Evolution
+        )
+
+        val totalFound = getTotal(allQuantsFound, listOfEvents)
+        val starFound = getStarTotal(allQuantsFound, listOfEvents)
+
+        updateStateToCompleted(
+            _state,
+            _timeInterval = selectedTimeInterval,
+            _selectedEventFilter = selectedEventFilter,
+            _selectedTextFilter = searchText,
+            _quantCategoryName = settingsInteractor.getCategoryNames(),
+            _listOfEvents = addSeparatorLine(listOfEvents, allQuantsFound),
+            _totalPhysicalFound = totalPhysicalFound,
+            _totalEmotionalFound = totalEmotionalFound,
+            _totalEvolutionFound = totalEvolutionFound,
+            _totalFound = totalFound,
+            _totalStarFound = starFound
+        )
+    }
+
+    private fun setTimeIntervalState(action: SetTimeIntervalStateAction) {
+        settingsInteractor.feedsTimeIntervalMode = action.timeInterval
+        if (action.timeInterval is TimeInterval.Selected) {
+            settingsInteractor.feedsTimeIntervalSelectedStart = action.timeInterval.start
+            settingsInteractor.feedsTimeIntervalSelectedEnd = action.timeInterval.end
+        }
+        _state.value.selectedTimeInterval = action.timeInterval
+        runSearch()
+    }
+
+    private fun setSearchText(action: SetSearchTextAction) {
+        settingsInteractor.feedsSearchText = action.searchText
+        _state.value.selectedTextFilter = action.searchText
+        runSearch()
+    }
+
+    private fun setSelectedQuantFilterMode(action: SetSelectedQuantFilterModeAction) {
+        settingsInteractor.feedsQuantFilterMode = action.mode
+        _state.value.selectedQuantFilterMode = action.mode
+        runSearch()
+    }
+
+    private fun editEvent(action: EditEventAction) {
+        viewModelScope.launch {
+            eventsStorageInteractor.getAllEvents().firstOrNull { it.id == action.eventId }
+                ?.let { event ->
+                    quantsStorageInteractor.getQuantById(event.quantId)?.let { quant ->
+                        _singleLifeEvent.value =
+                            FeedsFragmentSingleLifeEvent.ShowEditEventDialog(quant, event)
+                    }
+                }
+        }
+    }
+
+    private fun eventEdited(action: EventEditedAction) {
+        eventsStorageInteractor.addEventToDB(action.event) { runSearch() }
+    }
+
+    private fun deleteEvent(action: DeleteEventAction) {
+        eventsStorageInteractor.deleteEvent(action.event) { runSearch() }
     }
 
     private fun addSeparatorLine(

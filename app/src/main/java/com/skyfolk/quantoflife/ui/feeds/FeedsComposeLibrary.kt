@@ -58,6 +58,7 @@ import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.entity.ValueTypeDisplayable
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentState
 import com.skyfolk.quantoflife.ui.theme.Colors.Orange
 import com.skyfolk.quantoflife.ui.theme.Typography
 import com.skyfolk.quantoflife.utils.format
@@ -329,7 +330,6 @@ class TimeIntervalToContentMapper : (TimeInterval) -> String {
     }
 }
 
-@ExperimentalComposeUiApi
 @Composable
 fun FilterBlock(
     listOfQuantFilterModes: List<QuantFilterMode>,
