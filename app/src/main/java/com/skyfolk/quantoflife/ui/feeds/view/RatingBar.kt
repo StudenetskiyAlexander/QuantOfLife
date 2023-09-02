@@ -1,4 +1,4 @@
-package com.skyfolk.quantoflife.ui.feeds
+package com.skyfolk.quantoflife.ui.feeds.view
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background

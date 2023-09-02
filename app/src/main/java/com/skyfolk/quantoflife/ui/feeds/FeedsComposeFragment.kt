@@ -22,10 +22,15 @@ import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentSingleLifeEvent
 import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentState
 import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment
 import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
-import com.skyfolk.quantoflife.ui.theme.ComposeFlowTestTheme
+import com.skyfolk.quantoflife.ui.theme.QuantOfLifeMainTheme
 import com.skyfolk.quantoflife.utils.setOnHideByTimeout
 import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.shared.presentation.view.withNotNull
+import com.skyfolk.quantoflife.ui.feeds.view.EventsList
+import com.skyfolk.quantoflife.ui.feeds.view.FilterBlock
+import com.skyfolk.quantoflife.ui.feeds.view.SeparatorLine
+import com.skyfolk.quantoflife.ui.feeds.view.TotalValues
+import com.skyfolk.quantoflife.ui.feeds.vm.FeedsViewModel
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.android.viewmodel.ext.android.viewModel
 
@@ -59,7 +64,7 @@ class FeedsComposeFragment :
 
                 val state by viewModel.state.collectAsState()
 
-                ComposeFlowTestTheme {
+                QuantOfLifeMainTheme {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -100,7 +105,7 @@ class FeedsComposeFragment :
                                     .toMutableList()
                             listOfQuantFilterModes.add(0, QuantFilterMode.All)
 
-                            TotalValues(state, modifier = Modifier)
+                            TotalValues(state = state)
 
                             FilterBlock(
                                 listOfQuantFilterModes = listOfQuantFilterModes,

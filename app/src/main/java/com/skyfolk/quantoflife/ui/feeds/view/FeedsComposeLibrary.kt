@@ -1,4 +1,4 @@
-package com.skyfolk.quantoflife.ui.feeds
+package com.skyfolk.quantoflife.ui.feeds.view
 
 import android.app.DatePickerDialog
 import android.content.Context
@@ -71,31 +71,6 @@ import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun TotalValue(
-    description: String,
-    value: Double?, valueFormatAfterDot: Int = 1,
-    style: TextStyle = LocalTextStyle.current
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 5.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = "Всего ${description.lowercase(Locale.ROOT)} :",
-            textAlign = TextAlign.Left,
-            style = style
-        )
-        Text(
-            text = if (value != null) String.format("%.${valueFormatAfterDot}f", value) else "",
-            textAlign = TextAlign.Right,
-            style = style
-        )
-    }
-}
-
-@Composable
 fun SmallSubtitle(text: String) {
     Text(
         modifier = Modifier
@@ -117,50 +92,6 @@ fun SeparatorLine() {
         color = Color.Black,
         thickness = 1.dp
     )
-}
-
-@Composable
-fun TotalValues(state: FeedsFragmentState, modifier: Modifier) {
-    val descriptionsList = getCategoryArrayNames(state)
-    val valuesList = when (state) {
-        is FeedsFragmentState.EventsListLoading -> arrayOfNulls<Double?>(descriptionsList.size).toList()
-        is FeedsFragmentState.LoadingEventsListCompleted -> getCategoryArrayValues(state)
-    }
-    val subtitle = when (state) {
-        is FeedsFragmentState.EventsListLoading -> "...."
-        is FeedsFragmentState.LoadingEventsListCompleted -> "Итого за период найдено ${state.listOfEvents.filter { it.isEvent }.size} событий."
-    }
-    val totalStarFound: Double? = when (state) {
-        is FeedsFragmentState.EventsListLoading -> null
-        is FeedsFragmentState.LoadingEventsListCompleted -> state.totalStarFound
-    }
-    val totalFound: Double? = when (state) {
-        is FeedsFragmentState.EventsListLoading -> null
-        is FeedsFragmentState.LoadingEventsListCompleted -> state.totalFound
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 5.dp)
-    ) {
-        SmallSubtitle(text = subtitle)
-        TotalValue(description = descriptionsList[0], value = valuesList[0])
-        TotalValue(description = descriptionsList[1], value = valuesList[1])
-        TotalValue(description = descriptionsList[2], value = valuesList[2])
-        TotalValue(
-            description = "звезд",
-            value = totalStarFound,
-            valueFormatAfterDot = 1
-        )
-        TotalValue(
-            description = "",
-            value = totalFound,
-            style = Typography.subtitle2,
-            valueFormatAfterDot = 2
-        )
-        SeparatorLine()
-    }
 }
 
 @Composable
@@ -656,25 +587,4 @@ fun SelectedTimeInterval(
                 .show()
         }
     }
-}
-
-private fun getCategoryArrayNames(state: FeedsFragmentState): List<String> {
-    return listOf(
-        state.quantCategoryNames.firstOrNull { it.first == QuantCategory.Physical }?.second
-            ?: "",
-        state.quantCategoryNames.firstOrNull { it.first == QuantCategory.Emotion }?.second
-            ?: "",
-        state.quantCategoryNames.firstOrNull { it.first == QuantCategory.Evolution }?.second
-            ?: "",
-        state.quantCategoryNames.firstOrNull { it.first == QuantCategory.Other }?.second
-            ?: ""
-    )
-}
-
-private fun getCategoryArrayValues(state: FeedsFragmentState.LoadingEventsListCompleted): List<Double> {
-    return listOf(
-        state.totalPhysicalFound,
-        state.totalEmotionalFound,
-        state.totalEvolutionFound
-    )
 }

@@ -8,7 +8,7 @@ import com.skyfolk.quantoflife.import.ImportInteractor
 import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.settings.SettingsInteractor
-import com.skyfolk.quantoflife.ui.feeds.FeedsViewModel
+import com.skyfolk.quantoflife.ui.feeds.vm.FeedsViewModel
 import com.skyfolk.quantoflife.ui.now.NowViewModel
 import com.skyfolk.quantoflife.ui.onboarding.OnBoardingViewModel
 import com.skyfolk.quantoflife.ui.settings.SettingsViewModel
