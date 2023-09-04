@@ -191,7 +191,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     false
                 )
                 binding.eventSpinner2.setSelection(
-                    quantsSpinnerAdapter.getPosition(it.filter),
+                    quantsSpinnerAdapter.getPosition(it.filter2),
                     false
                 )
 
@@ -199,21 +199,19 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     GraphSelectedYearMode.OnlyYearMode(it)
                 }.toMutableList()
                 listOfYears.add(0, GraphSelectedYearMode.All)
-
                 val yearsSpinnerAdapter = GraphSelectedYearModeAdapter(
                     requireContext(),
                     listOfYears
                 )
                 binding.yearPeriodSpinner.adapter = yearsSpinnerAdapter
-                val selectedPosition = yearsSpinnerAdapter.getPosition(it.selectedYear)
                 binding.yearPeriodSpinner.setSelection(
-                    selectedPosition,
+                    yearsSpinnerAdapter.getPosition(it.selectedYear),
                     false
                 )
 
                 binding.yearPeriodSpinner2.adapter = yearsSpinnerAdapter
                 binding.yearPeriodSpinner2.setSelection(
-                    selectedPosition,
+                    yearsSpinnerAdapter.getPosition(it.selectedYear2),
                     false
                 )
 
