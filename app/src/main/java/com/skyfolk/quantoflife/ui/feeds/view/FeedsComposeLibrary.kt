@@ -71,30 +71,6 @@ import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun SmallSubtitle(text: String) {
-    Text(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp),
-        text = text,
-        style = Typography.subtitle1,
-        textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Bold
-    )
-}
-
-@Composable
-fun SeparatorLine() {
-    Divider(
-        modifier = Modifier
-            .padding(horizontal = 5.dp)
-            .padding(top = 5.dp),
-        color = Color.Black,
-        thickness = 1.dp
-    )
-}
-
-@Composable
 fun TimeSelectLayout(
     time: Long,
     horizontalArrangement: Arrangement.Horizontal,

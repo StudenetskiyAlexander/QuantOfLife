@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity() {
                     settingsInteractor.showHidden = false
                 }
             })
+        biometricPrompt.authenticate(promptInfo)
 //        if (!settingsInteractor.isOnboardingComplete) {
 //            startActivity(Intent(baseContext, OnBoardingActivity::class.java))
 //        }
