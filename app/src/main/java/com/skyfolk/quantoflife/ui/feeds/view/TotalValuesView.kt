@@ -17,6 +17,7 @@ import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentState
+import com.skyfolk.quantoflife.ui.feeds.view.preview.EVENT_DISPLAYABLE
 import com.skyfolk.quantoflife.ui.theme.QuantOfLifeMainTheme
 import com.skyfolk.quantoflife.ui.theme.Typography
 import java.util.Locale
@@ -117,12 +118,12 @@ private fun TotalValuesCompletedPreview() {
                 selectedQuantFilterMode = QuantFilterMode.All,
                 selectedTextFilter = "",
                 quantCategoryNames = listOf(),
-                listOfEvents = listOf(),
-                totalPhysicalFound = 0.0,
-                totalEmotionalFound = 0.0,
-                totalEvolutionFound = 0.0,
-                totalStarFound = 0.0,
-                totalFound = 0.0
+                listOfEvents = listOf(EVENT_DISPLAYABLE),
+                totalPhysicalFound = 1.0,
+                totalEmotionalFound = 2.0,
+                totalEvolutionFound = 3.0,
+                totalStarFound = 4.0,
+                totalFound = 1230.0
             )
         )
     }
