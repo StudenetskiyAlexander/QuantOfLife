@@ -77,10 +77,7 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
 
         binding.eventHiddenButton.setOnClickListener {
             isHidden = !isHidden
-            binding.eventHiddenButton.setImageResource(when (isHidden) {
-                true -> R.drawable.quant_hidden
-                false -> R.drawable.quant_show
-            })
+            updateIsHiddenIcon(isHidden)
         }
 
         var seekBarMultiplier = 1.0
@@ -179,11 +176,8 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
             binding.buttonDelete.visibility = View.VISIBLE
             binding.eventNote.setText(it.note)
             binding.eventDate.text = it.date.toDate()
-            Log.d("skyfolk-edit", "onCreateView: ${it.isHidden}")
-            binding.eventHiddenButton.setImageResource(when (it.isHidden) {
-                true -> R.drawable.quant_hidden
-                false -> R.drawable.quant_show
-            })
+            isHidden = it.isHidden
+            updateIsHiddenIcon(it.isHidden)
 
             calendar.timeInMillis = it.date
             when (it) {
@@ -227,6 +221,13 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
 
     fun setDialogListener(listener: DialogListener) {
         dialogListener = listener
+    }
+
+    private fun updateIsHiddenIcon(isHidden: Boolean) {
+        binding.eventHiddenButton.setImageResource(when (isHidden) {
+            true -> R.drawable.quant_hidden
+            false -> R.drawable.quant_show
+        })
     }
 
     interface DialogListener {

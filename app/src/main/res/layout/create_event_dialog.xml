@@ -193,7 +193,7 @@
             android:layout_height="50dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
-            android:src="@drawable/quant_hidden"
+            android:src="@drawable/quant_show"
             app:layout_constraintBottom_toBottomOf="@id/event_note"
             app:layout_constraintRight_toLeftOf="@id/event_date_choice_button"
             app:layout_constraintLeft_toRightOf="@id/event_note"
