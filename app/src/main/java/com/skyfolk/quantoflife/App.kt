@@ -9,6 +9,7 @@ import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.ui.feeds.vm.FeedsViewModel
+import com.skyfolk.quantoflife.ui.goals.GoalToPresentationMapper
 import com.skyfolk.quantoflife.ui.now.NowViewModel
 import com.skyfolk.quantoflife.ui.onboarding.OnBoardingViewModel
 import com.skyfolk.quantoflife.ui.settings.SettingsViewModel
@@ -26,6 +27,7 @@ class App : Application() {
         val mapperModule = module {
             single { TimeIntervalToPeriodInMillisMapper(get()) }
             single { QuantBaseToCreateQuantTypeMapper() }
+            single { GoalToPresentationMapper(androidContext(), get(), get(), get(), get()) }
         }
 
         val storageModule = module {
@@ -46,7 +48,7 @@ class App : Application() {
         }
 
         val viewModelModule = module {
-            viewModel { NowViewModel(get(), get(), get(), get(), get(), get(), get()) }
+            viewModel { NowViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
             viewModel { SettingsViewModel(get(), get(), get(), get()) }
             viewModel { FeedsViewModel(get(), get(), get(), get()) }
             viewModel { StatisticViewModel(get(), get(), get(), get()) }

@@ -77,20 +77,13 @@ class NowFragment : Fragment() {
         }
 
         viewModel.listOfGoal.observe(viewLifecycleOwner) {
-            if (it.size == 0) binding.goalsLayout.visibility = View.GONE
+            if (it.isEmpty()) binding.goalsLayout.visibility = View.GONE
             else {
                 binding.goalsLayout.visibility = View.VISIBLE
                 binding.listOfGoals.layoutManager =
                     LinearLayoutManager(this.context, RecyclerView.VERTICAL, false)
-                val adapterGoals = GoalsListDataAdapter(it, settingsInteractor) { goalPresent ->
-                    viewModel.openCreateNewGoalDialog(
-                        Goal(
-                            goalPresent.id,
-                            goalPresent.duration,
-                            goalPresent.target,
-                            goalPresent.type
-                        )
-                    )
+                val adapterGoals = GoalsListDataAdapter(it) { goalPresent ->
+                    viewModel.openCreateNewGoalDialog(goalPresent.id)
                     true
                 }
                 binding.listOfGoals.adapter = adapterGoals
@@ -204,8 +197,18 @@ class NowFragment : Fragment() {
 
         override fun getMenuItem(context: Context, position: Int): SpeedDialMenuItem =
             when (position) {
-                0 -> SpeedDialMenuItem(context, R.drawable.ic_pen, getString(R.string.menu_item_create_quant))
-                1 -> SpeedDialMenuItem(context, R.drawable.ic_target, getString(R.string.menu_item_create_goal))
+                0 -> SpeedDialMenuItem(
+                    context,
+                    R.drawable.ic_pen,
+                    getString(R.string.menu_item_create_quant)
+                )
+
+                1 -> SpeedDialMenuItem(
+                    context,
+                    R.drawable.ic_target,
+                    getString(R.string.menu_item_create_goal)
+                )
+
                 else -> throw IllegalArgumentException("No menu item: $position")
             }
 

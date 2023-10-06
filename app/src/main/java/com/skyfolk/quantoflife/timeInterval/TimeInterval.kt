@@ -1,5 +1,6 @@
 package com.skyfolk.quantoflife.timeInterval
 
+import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.TypedSealedClass
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import java.util.*
@@ -74,6 +75,18 @@ sealed class TimeInterval : TypedSealedClass {
             is All -> array[3]
             is Selected -> array[4]
             is Year -> array[5]
+        }
+    }
+
+    fun durationInDays(dateTimeRepository: IDateTimeRepository): Int {
+        return when (this) {
+            is TimeInterval.Today -> 1
+            is TimeInterval.Week -> 7
+            is TimeInterval.Month -> dateTimeRepository.getCalendar()
+                .getActualMaximum(Calendar.DAY_OF_MONTH)
+            is TimeInterval.All -> Int.MAX_VALUE
+            is TimeInterval.Selected -> 0 //TODO Not 0, calculate
+            is TimeInterval.Year -> 365
         }
     }
 }

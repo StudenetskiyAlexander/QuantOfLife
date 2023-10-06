@@ -1,5 +1,6 @@
 package com.skyfolk.quantoflife.entity
 
+import androidx.annotation.ColorInt
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import java.util.*
 
@@ -10,12 +11,12 @@ data class Goal(
     var type: QuantCategory
 )
 
-data class GoalPresent(
+data class GoalPresentation(
     var id: String,
-    var duration: TimeInterval,
-    var durationInDays: Int,
-    var target: Double,
-    var comleted: Double,
-    var daysGone: Int,
-    var type: QuantCategory
+    var targetText: String,
+    var progress: Int,
+    var progressText: String,
+    var additionText: String,
+    @ColorInt
+    var barColor: Int
 )

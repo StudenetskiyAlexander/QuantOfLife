@@ -50,7 +50,7 @@
     <string name="hint_note">Примечание</string>
     <string name="bonuses">%1s бонусы</string>
     <string name="goal_title_with_values">Цель - %1.0f %2s за %3s.</string>
-    <string name="goal_complete">Цель выполнена.</string>
+    <string name="goal_complete">Цель выполнена: %1s из %2s</string>
     <string name="goal_complete_part">%1s из %2s</string>
     <string name="goal_to_complete_note">Чтобы выполнять цель, получите сегодня еще %1s ☆"</string>
     <string name="goal_progress_ok">Все отлично, продолжайте в том же духе!"</string>

@@ -8,13 +8,16 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.skyfolk.quantoflife.databinding.CreateGoalDialogBinding
+import com.skyfolk.quantoflife.db.GoalStorageInteractor
+import com.skyfolk.quantoflife.db.IGoalStorageInteractor
 import com.skyfolk.quantoflife.entity.*
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 
 class CreateGoalDialogFragment(
-    private val goal: Goal?,
-    private val settingsInteractor: SettingsInteractor
+    private val goalId: String?,
+    private val settingsInteractor: SettingsInteractor,
+    private val goalStorageInteractor: IGoalStorageInteractor
 ) : BottomSheetDialogFragment() {
     private var dialogListener: DialogListener? = null
     private lateinit var binding: CreateGoalDialogBinding
@@ -38,9 +41,11 @@ class CreateGoalDialogFragment(
 
         binding.spinnerCategory.adapter = spinnerArrayAdapter
 
+        val goal = goalStorageInteractor.getListOfGoals().firstOrNull { it.id == goalId }
         if (goal != null) {
             binding.buttonDelete.visibility = View.VISIBLE
-            val typePosition = if (goal.type.ordinal <= 3) goal.type.ordinal else categoryArray.size - 1
+            val typePosition =
+                if (goal.type.ordinal <= 3) goal.type.ordinal else categoryArray.size - 1
             binding.spinnerCategory.setSelection(typePosition)
             binding.spinnerPeriod.setSelection(
                 when (goal.duration) {

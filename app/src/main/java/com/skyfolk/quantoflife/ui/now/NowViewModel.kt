@@ -11,7 +11,7 @@ import com.skyfolk.quantoflife.db.IGoalStorageInteractor
 import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
 import com.skyfolk.quantoflife.entity.EventBase
 import com.skyfolk.quantoflife.entity.Goal
-import com.skyfolk.quantoflife.entity.GoalPresent
+import com.skyfolk.quantoflife.entity.GoalPresentation
 import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.import.ImportInteractor
@@ -20,6 +20,7 @@ import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.create_quant.CreateQuantDialogFragment
 import com.skyfolk.quantoflife.ui.goals.CreateGoalDialogFragment
+import com.skyfolk.quantoflife.ui.goals.GoalToPresentationMapper
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,16 +28,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
-class NowViewModel(
+internal class NowViewModel(
     private val quantsStorageInteractor: IQuantsStorageInteractor,
     private val eventsStorageInteractor: EventsStorageInteractor,
     private val goalStorageInteractor: IGoalStorageInteractor,
     private val settingsInteractor: SettingsInteractor,
     private val dateTimeRepository: IDateTimeRepository,
     private val importInteractor: ImportInteractor,
-    private val quantBaseToCreateQuantTypeMapper: QuantBaseToCreateQuantTypeMapper
+    private val quantBaseToCreateQuantTypeMapper: QuantBaseToCreateQuantTypeMapper,
+    private val goalToPresentationMapper: GoalToPresentationMapper
 ) : ViewModel(), INowViewModel {
     private val _toastState = SingleLiveEvent<String>()
     val toastState: LiveData<String> get() = _toastState
@@ -52,10 +53,10 @@ class NowViewModel(
     private val _todayTotal = MutableStateFlow(0.0)
     val todayTotal: StateFlow<Double> = _todayTotal.asStateFlow()
 
-    private val _listOfGoals = MutableLiveData<ArrayList<GoalPresent>>().apply {
+    private val _listOfGoals = MutableLiveData<List<GoalPresentation>>().apply {
         value = arrayListOf()
     }
-    val listOfGoal: LiveData<ArrayList<GoalPresent>> = _listOfGoals
+    val listOfGoal: LiveData<List<GoalPresentation>> = _listOfGoals
 
     init {
         if (quantsStorageInteractor.getAllQuantsList(false).isEmpty()) {
@@ -70,7 +71,11 @@ class NowViewModel(
     }
 
     override fun openCreateNewQuantDialog(existQuant: QuantBase?) {
-        val dialog = CreateQuantDialogFragment(existQuant, settingsInteractor, quantBaseToCreateQuantTypeMapper)
+        val dialog = CreateQuantDialogFragment(
+            existQuant,
+            settingsInteractor,
+            quantBaseToCreateQuantTypeMapper
+        )
         dialog.setDialogListener(object : CreateQuantDialogFragment.DialogListener {
             override fun onConfirm(quant: QuantBase) {
                 quantsStorageInteractor.addQuantToDB(quant) {
@@ -90,8 +95,8 @@ class NowViewModel(
         _dialogState.value = dialog
     }
 
-    override fun openCreateNewGoalDialog(existGoal: Goal?) {
-        val dialog = CreateGoalDialogFragment(existGoal, settingsInteractor)
+    override fun openCreateNewGoalDialog(existGoalId: String?) {
+        val dialog = CreateGoalDialogFragment(existGoalId, settingsInteractor, goalStorageInteractor)
         dialog.setDialogListener(object : CreateGoalDialogFragment.DialogListener {
             override fun onConfirm(goal: Goal) {
                 goalStorageInteractor.addGoalToDB(goal)
@@ -132,49 +137,8 @@ class NowViewModel(
                 getTotal(quantsStorageInteractor.getAllQuantsList(false), resultList)
             }
 
-            val millisecondsInDay = 24 * 60 * 60 * 1000
-            val goals = goalStorageInteractor.getListOfGoals()
-            val goalsPresentList: ArrayList<GoalPresent> = arrayListOf()
-            for (goal in goals) {
-                val goalStartDate = dateTimeRepository.getCalendar().getStartDateCalendar(
-                    goal.duration,
-                    settingsInteractor.startDayTime
-                ).timeInMillis
-
-                val goalResultList = ArrayList(
-                    eventsStorageInteractor.getAllEvents()
-                        .filter { it.date in goalStartDate until endDate })
-
-                val daysGone = ((endDate - goalStartDate) / millisecondsInDay).toInt() + 1
-                val completed = getTotal(
-                    quantsStorageInteractor.getAllQuantsList(false),
-                    goalResultList,
-                    goal.type
-                )
-                val durationInDays = when (goal.duration) {
-                    is TimeInterval.Today -> 1
-                    is TimeInterval.Week -> 7
-                    is TimeInterval.Month -> dateTimeRepository.getCalendar()
-                        .getActualMaximum(Calendar.DAY_OF_MONTH)
-                    is TimeInterval.All -> 0
-                    is TimeInterval.Selected -> 0
-                    is TimeInterval.Year -> 365
-                }
-
-                goalsPresentList.add(
-                    GoalPresent(
-                        goal.id,
-                        goal.duration,
-                        durationInDays,
-                        goal.target,
-                        completed,
-                        daysGone,
-                        goal.type
-                    )
-                )
-            }
-
-            _listOfGoals.value = goalsPresentList
+            _listOfGoals.value =
+                goalStorageInteractor.getListOfGoals().map { goalToPresentationMapper.invoke(it) }
         }
     }
 }
