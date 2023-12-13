@@ -27,6 +27,7 @@ internal class GoalToPresentationMapper(
         ).timeInMillis
 
         val endDate = dateTimeRepository.getTimeInMillis()
+        // Как-будто это не задача этого слоя - считать
         val goalResultList = ArrayList(
             eventsStorageInteractor.getAllEvents()
                 .filter { it.date in goalStartDate until endDate })
@@ -35,7 +36,7 @@ internal class GoalToPresentationMapper(
             goalResultList,
             goal.type
         )
-        val progress: Int = ((completed / goal.target) * 100).toInt()
+        val progress = ((completed / goal.target) * 100).toInt()
         val color = context.resources.getColor(
             when (progress >= 100) {
                 true -> R.color.progressCompleted

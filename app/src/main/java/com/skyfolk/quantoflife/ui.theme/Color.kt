@@ -12,6 +12,9 @@ object Colors {
     val Teal200 = Color(0xFF03DAC5)
     val Orange = Color(0xFFFF8800)
     val White = Color(0xFFFFFFFF)
+    val LightGray = Color(0xFF424242)
+    val LightFontGray = Color(0xFFC6C6C6)
+    val MidGray = Color(0xFF60635A)
 }
 
 fun Color.toInt(): Int {

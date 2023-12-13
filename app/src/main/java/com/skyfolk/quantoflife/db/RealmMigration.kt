@@ -74,6 +74,10 @@ class RealmMigration : RealmMigration {
             schema["QuantDbEntity"]
                 ?.addField("minSize", Int::class.java)
                 ?.addField("maxSize", Int::class.java)
+            schema["QuantDbEntity"]
+                ?.addField("isHidden", Boolean::class.java)
+            schema["EventDbEntity"]
+                ?.addField("isHidden", Boolean::class.java)
         }
 
         if (oldVersion == 10L) {

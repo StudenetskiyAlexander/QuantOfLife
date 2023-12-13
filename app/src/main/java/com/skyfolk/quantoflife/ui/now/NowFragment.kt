@@ -9,6 +9,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +26,7 @@ import com.skyfolk.quantoflife.databinding.NowFragmentBinding
 import com.skyfolk.quantoflife.entity.*
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.ui.goals.GoalsListDataAdapter
+import com.skyfolk.quantoflife.ui.goals.view.GoalView
 import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment.DialogListener
 import com.skyfolk.quantoflife.utils.setOnHideByTimeout
 import kotlinx.coroutines.flow.collect
@@ -76,17 +83,22 @@ class NowFragment : Fragment() {
             }
         }
 
-        viewModel.listOfGoal.observe(viewLifecycleOwner) {
-            if (it.isEmpty()) binding.goalsLayout.visibility = View.GONE
+        viewModel.listOfGoal.observe(viewLifecycleOwner) { goals ->
+            if (goals.isEmpty()) binding.goalsComposeView.visibility = View.GONE
             else {
-                binding.goalsLayout.visibility = View.VISIBLE
-                binding.listOfGoals.layoutManager =
-                    LinearLayoutManager(this.context, RecyclerView.VERTICAL, false)
-                val adapterGoals = GoalsListDataAdapter(it) { goalPresent ->
-                    viewModel.openCreateNewGoalDialog(goalPresent.id)
-                    true
+                binding.goalsComposeView.visibility = View.VISIBLE
+                binding.goalsComposeView.setContent {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        goals.forEach { goal ->
+                            GoalView(goal = goal) {
+                                viewModel.openCreateNewGoalDialog(goal.id)
+                            }
+                        }
+                    }
                 }
-                binding.listOfGoals.adapter = adapterGoals
             }
         }
 
