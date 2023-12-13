@@ -78,10 +78,19 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                     binding.chartNotEnought.visibility = View.INVISIBLE
                     binding.maximimumWithText.visibility = View.INVISIBLE
                     binding.maximimumWithoutText.visibility = View.INVISIBLE
+                    binding.averageText.visibility = View.INVISIBLE
                 }
 
                 is StatisticFragmentState.Entries -> {
                     if (data.entries.size > 0 && data.entries.first().entries.size > 1) {
+                        binding.averageText.text = data.entries.map {
+                            getString(
+                                R.string.statistic_average,
+                                it.average.toString(),
+                                binding.timePeriodSpinner.selectedItem.toString()
+                            )
+                        }.joinToString("\n")
+
                         binding.maximimumWithText.text = getString(
                             R.string.statistic_maximum_with,
                             binding.timePeriodSpinner.selectedItem.toString(),
@@ -157,6 +166,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                         binding.chartNotEnought.visibility = View.INVISIBLE
                         binding.maximimumWithText.visibility = View.VISIBLE
                         binding.maximimumWithoutText.visibility = View.VISIBLE
+                        binding.averageText.visibility = View.VISIBLE
                     } else {
                         // Not enough data
                         binding.progress.visibility = View.INVISIBLE
@@ -164,6 +174,7 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
                         binding.chartNotEnought.visibility = View.VISIBLE
                         binding.maximimumWithText.visibility = View.INVISIBLE
                         binding.maximimumWithoutText.visibility = View.INVISIBLE
+                        binding.averageText.visibility = View.INVISIBLE
                     }
                 }
             }

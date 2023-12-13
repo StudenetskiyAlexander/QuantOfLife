@@ -17,7 +17,6 @@
         android:orientation="vertical"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
-        android:paddingTop="10dp"
         android:paddingBottom="60dp">
 
         <ProgressBar
@@ -141,7 +140,6 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginBottom="10dp"
-            android:layout_marginTop="10dp"
             app:layout_constraintBottom_toTopOf="@id/maximimum_with_text"
             app:layout_constraintTop_toBottomOf="@id/event_spinner_layout"
             tools:layout_editor_absoluteX="10dp" />
@@ -162,15 +160,22 @@
             android:id="@+id/maximimum_with_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="@id/maximimum_without_text"
+            app:layout_constraintBottom_toTopOf="@id/maximimum_without_text"
             app:layout_constraintTop_toBottomOf="@id/chart" />
 
         <TextView
             android:id="@+id/maximimum_without_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/average_text"
             app:layout_constraintTop_toBottomOf="@id/maximimum_with_text" />
+
+        <TextView
+            android:id="@+id/average_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/maximimum_without_text" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

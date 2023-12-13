@@ -294,6 +294,8 @@ class StatisticViewModel(
             else -> "Все события"
         }
 
+
+
         return StatisticFragmentState.EntriesAndFirstDate(
             name = name,
             entries = result,
@@ -305,7 +307,8 @@ class StatisticViewModel(
             maximumWithout = StatisticFragmentState.MaximumContinuously(
                 totalMaximumWithout,
                 totalMaximumWithoutStartTime
-            )
+            ),
+            average = result.map { it.y }.sum() / result.size
         )
     }
 
@@ -407,7 +410,8 @@ sealed class StatisticFragmentState {
         val entries: ArrayList<BarEntry>,
         var firstDate: Long,
         val maximumWith: MaximumContinuously,
-        val maximumWithout: MaximumContinuously
+        val maximumWithout: MaximumContinuously,
+        val average: Float
     )
 
     data class MaximumContinuously(val lenght: Int, val startDate: Long)
