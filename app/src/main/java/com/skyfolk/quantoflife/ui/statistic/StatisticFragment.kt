@@ -11,7 +11,9 @@ import android.widget.AdapterView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.navOptions
 import com.github.mikephil.charting.components.XAxis.XAxisPosition
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.highlight.Highlight
@@ -45,7 +47,12 @@ class StatisticFragment : Fragment(), OnChartValueSelectedListener {
             NavigateToFeedEvent.START_DATE_KEY to event.startDate,
             NavigateToFeedEvent.END_DATE_KEY to event.endDate
         )
-        this.findNavController().navigate(R.id.action_global_to_feeds, bundle)
+        this.findNavController().navigate(
+            resId = R.id.action_global_to_feeds,
+            args = bundle,
+            navOptions = navOptions {
+                launchSingleTop = true
+            })
     }
 
     private fun Fragment.findNavController(): NavController =

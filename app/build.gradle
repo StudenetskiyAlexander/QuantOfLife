@@ -61,6 +61,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.7.5'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
+    implementation "dev.reformator.stacktracedecoroutinator:stacktrace-decoroutinator-android:2.3.8"
 
     // Compose
     implementation "androidx.compose.runtime:runtime:1.5.4"
@@ -90,6 +91,7 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.google.code.gson:gson-extras:2.8.5'
+    implementation 'androidx.compose.material3:material3-android:1.2.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

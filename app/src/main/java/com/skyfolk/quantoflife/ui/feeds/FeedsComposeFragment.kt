@@ -62,7 +62,7 @@ class FeedsComposeFragment :
         withNotNull(binding) {
             composeView.setContent {
 
-                val state by viewModel.state.collectAsState()
+                val state by stateFlow.collectAsState()
 
                 QuantOfLifeMainTheme {
                     Column(
@@ -135,6 +135,7 @@ class FeedsComposeFragment :
     override fun proceedSingleLifeEvent(event: FeedsFragmentSingleLifeEvent) {
         when (event) {
             is FeedsFragmentSingleLifeEvent.ShowEditEventDialog -> {
+
                 val dialog = CreateEventDialogFragment(event.quant, event.event)
                 dialog.setDialogListener(object :
                     CreateEventDialogFragment.DialogListener {

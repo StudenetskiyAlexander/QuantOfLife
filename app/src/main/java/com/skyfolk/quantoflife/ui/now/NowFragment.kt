@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -28,6 +31,8 @@ import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.ui.goals.GoalsListDataAdapter
 import com.skyfolk.quantoflife.ui.goals.view.GoalView
 import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment.DialogListener
+import com.skyfolk.quantoflife.ui.now.create.CreateEventComposeFragment
+import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
 import com.skyfolk.quantoflife.utils.setOnHideByTimeout
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -121,8 +126,7 @@ class NowFragment : Fragment() {
             LinearLayoutManager(this.context, RecyclerView.HORIZONTAL, false)
 
         val quantListClickListener: (quant: QuantBase) -> Unit = {
-            val dialog = CreateEventDialogFragment(it)
-            dialog.setDialogListener(object : DialogListener {
+            val listener = object : DialogListener {
                 override fun onConfirm(event: EventBase, name: String) {
                     val snackBar = Snackbar.make(
                         requireActivity().findViewById(android.R.id.content),
@@ -143,7 +147,14 @@ class NowFragment : Fragment() {
                 override fun onDelete(event: EventBase, name: String) {
                     //Событие не может быть удалено при его создании
                 }
-            })
+            }
+
+            val useComposeDialog = true
+            val dialog = when (useComposeDialog) {
+                true -> CreateEventComposeFragment(it, listener)
+                false -> CreateEventDialogFragment(it).also { it.setDialogListener(listener) }
+            }
+
             val fm: FragmentManager = requireActivity().supportFragmentManager
             dialog.show(fm, dialog.tag)
         }

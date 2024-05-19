@@ -9,7 +9,19 @@
         android:id="@+id/navigation_home"
         android:name="com.skyfolk.quantoflife.ui.now.NowFragment"
         android:label="@string/title_now"
-        tools:layout="@layout/now_fragment" />
+        tools:layout="@layout/now_fragment">
+
+        <action
+            android:id="@+id/action_create_event"
+            app:destination="@id/navigation_create_event" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_create_event"
+        android:name="com.skyfolk.quantoflife.ui.now.create.CreateEventComposeFragment"
+        android:label="@string/title_feeds"
+        tools:layout="@layout/create_event_compose" />
 
     <fragment
         android:id="@+id/navigation_feeds"

@@ -11,9 +11,11 @@ import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.ui.feeds.vm.FeedsViewModel
 import com.skyfolk.quantoflife.ui.goals.GoalToPresentationMapper
 import com.skyfolk.quantoflife.ui.now.NowViewModel
+import com.skyfolk.quantoflife.ui.now.create.CreateEventViewModel
 import com.skyfolk.quantoflife.ui.onboarding.OnBoardingViewModel
 import com.skyfolk.quantoflife.ui.settings.SettingsViewModel
 import com.skyfolk.quantoflife.ui.statistic.StatisticViewModel
+import dev.reformator.stacktracedecoroutinator.runtime.DecoroutinatorRuntime
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.android.viewmodel.dsl.viewModel
@@ -23,6 +25,8 @@ import org.koin.dsl.module
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+
+        DecoroutinatorRuntime.load()
 
         val mapperModule = module {
             single { TimeIntervalToPeriodInMillisMapper(get()) }
@@ -53,6 +57,7 @@ class App : Application() {
             viewModel { FeedsViewModel(get(), get(), get(), get()) }
             viewModel { StatisticViewModel(get(), get(), get(), get()) }
             viewModel { OnBoardingViewModel(get()) }
+            viewModel { CreateEventViewModel(get(),get(),get()) }
         }
 
         startKoin {
