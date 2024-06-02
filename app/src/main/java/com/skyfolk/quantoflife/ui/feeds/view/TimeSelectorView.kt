@@ -43,7 +43,7 @@ fun TimeSelectorView(
 
 @Preview
 @Composable
-private fun TimeSelectorView() {
+private fun TimeSelectorPreview() {
     QuantOfLifeMainTheme {
         TimeSelectorView(time = 123456) {}
     }
