@@ -26,8 +26,6 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        DecoroutinatorRuntime.load()
-
         val mapperModule = module {
             single { TimeIntervalToPeriodInMillisMapper(get()) }
             single { QuantBaseToCreateQuantTypeMapper() }

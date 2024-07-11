@@ -333,7 +333,7 @@ class StatisticViewModel(
                     result.add(
                         getEntries(
                             selectedYear = selectedYear,
-                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
                             quantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
@@ -346,7 +346,7 @@ class StatisticViewModel(
                     result.add(
                         getEntries(
                             selectedYear = selectedYear,
-                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
                             quantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
@@ -357,7 +357,7 @@ class StatisticViewModel(
                     result.add(
                         getEntries(
                             selectedYear = selectedYear2,
-                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
                             quantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
@@ -370,7 +370,7 @@ class StatisticViewModel(
                     result.add(
                         getEntries(
                             selectedYear = selectedYear,
-                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
                             quantFilterMode = onlyQuant,
                             startDayTime = settingsInteractor.startDayTime,
@@ -381,7 +381,7 @@ class StatisticViewModel(
                     result.add(
                         getEntries(
                             selectedYear = selectedYear,
-                            allEvents = eventsStorageInteractor.getAllEvents(),
+                            allEvents = eventsStorageInteractor.getAllEvents(settingsInteractor.showHidden),
                             allQuants = quantsStorageInteractor.getAllQuantsList(false),
                             quantFilterMode = onlyQuant2,
                             startDayTime = settingsInteractor.startDayTime,
