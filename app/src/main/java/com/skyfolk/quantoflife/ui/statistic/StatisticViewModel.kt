@@ -136,13 +136,21 @@ class StatisticViewModel(
 
         // TODO Mapper GraphSelectedYearToTimeMapper
         var lastDate = when (selectedYear) {
-            GraphSelectedYearMode.All -> dateTimeRepository.getTimeInMillis()
+            GraphSelectedYearMode.All -> {
+                val calendar = dateTimeRepository.getCalendar()
+                calendar
+                    .getStartDateCalendar(timeInterval, settingsInteractor.startDayTime)
+                    .timeInMillis
+            }
             is GraphSelectedYearMode.OnlyYearMode -> {
                 val calendar = dateTimeRepository.getCalendar()
                 calendar[Calendar.YEAR] = selectedYear.year
                 calendar
-                    .getEndDateCalendar(TimeInterval.Year, settingsInteractor.startDayTime)
+                    .getStartDateCalendar(timeInterval, settingsInteractor.startDayTime)
+                    .also { Log.d("skyfolk-last_week", "getEntries: ${it[Calendar.DAY_OF_MONTH]}")}
                     .timeInMillis
+                    .also { Log.d("skyfolk-last_week", "getEntries: ${it}")}
+
             }
         }
         lastDate = min(lastDate, dateTimeRepository.getTimeInMillis())
@@ -189,6 +197,7 @@ class StatisticViewModel(
                 timeInterval,
                 startDayTime
             ).timeInMillis
+            Log.d("skyfolk", "currentPeriodEnd: $currentPeriodEnd")
 
             val filteredEvents =
                 allFilteredEvents.filter { it.date in currentPeriodStart until currentPeriodEnd }

@@ -29,6 +29,22 @@ class StartDayTests {
     }
 
     @Test
+    fun selectedTimeInterval_thisWeek() {
+        calendar[Calendar.YEAR] = 2024
+        calendar[Calendar.MONTH] = 6
+        calendar[Calendar.DAY_OF_MONTH] = 11
+        calendar[Calendar.HOUR_OF_DAY] = 16
+        calendar[Calendar.MINUTE] = 5
+               Assert.assertEquals(
+            8,
+            calendar.getStartDateCalendar(
+                TimeInterval.Week,
+                startDayTimeInMillis
+            )[Calendar.DAY_OF_MONTH]
+        )
+    }
+
+    @Test
     fun selectedTimeInterval_Week() {
         //14-01 05:05
         Assert.assertEquals(11, calendar.getStartDateCalendar(TimeInterval.Week, startDayTimeInMillis)[Calendar.DAY_OF_MONTH])

@@ -1,6 +1,7 @@
 package com.skyfolk.quantoflife
 
 import android.content.SharedPreferences
+import androidx.test.platform.app.InstrumentationRegistry
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.statistic.IntervalAxisValueFormatter
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
@@ -14,7 +15,7 @@ class ValueFormaterTest {
     private val calendar = Calendar.getInstance()
     private val startDayTimeInMillis = ((5 * 60 * 60 * 1000) + (20 * 60 * 1000)).toLong() //05:20
     private val preferences: SharedPreferences = mock()
-    private val settingsInteractor = SettingsInteractor(, preferences)
+    private val settingsInteractor = SettingsInteractor(InstrumentationRegistry.getInstrumentation().context)
 
     @Before
     fun prepare() {
