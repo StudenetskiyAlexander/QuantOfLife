@@ -1,5 +1,6 @@
 package com.skyfolk.quantoflife.ui.now
 
+//import com.vsnappy1.datepicker.DatePicker as ComposeDatePicker
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -14,16 +15,17 @@ import android.widget.DatePicker
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.skyfolk.quantoflife.DateTimeRepository
 import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.databinding.CreateEventDialogBinding
-import com.skyfolk.quantoflife.entity.*
+import com.skyfolk.quantoflife.entity.EventBase
+import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.utils.toDate
 import org.koin.android.ext.android.inject
-import java.util.*
+import java.util.Calendar
 
 private const val SEEKBAR_MULTIPLIER = 10
 
@@ -64,15 +66,31 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
         binding.eventDescription.text = quant.description
 
         binding.eventDateChoiceButton.setOnClickListener {
-            val lastCalendar = settingsInteractor.lastSelectedCalendar
-            DatePickerDialog(
-                requireContext(),
-                onDateSelected,
-                lastCalendar.get(Calendar.YEAR),
-                lastCalendar.get(Calendar.MONTH),
-                lastCalendar.get(Calendar.DAY_OF_MONTH)
-            )
-                .show()
+            val dialog = SelectDateTimeFragment {
+                Log.d("skyfolk-picker", "onSelect: ${it}")
+            }
+            val fm: FragmentManager = requireActivity().supportFragmentManager
+            dialog.show(fm, dialog.tag)
+
+//            binding.createEventDatePicker.visibility = View.VISIBLE
+//            binding.createEventDatePicker.setContent {
+//                val lastCalendar = settingsInteractor.lastSelectedCalendar
+//                DateTimePicker(
+//                    onDateSelected = { date ->
+//                        binding.createEventDatePicker.visibility = View.GONE
+//                    },
+////                    currentDate =
+//                )
+//            }
+//            val lastCalendar = settingsInteractor.lastSelectedCalendar
+//            DatePickerDialog(
+//                requireContext(),
+//                onDateSelected,
+//                lastCalendar.get(Calendar.YEAR),
+//                lastCalendar.get(Calendar.MONTH),
+//                lastCalendar.get(Calendar.DAY_OF_MONTH)
+//            )
+//                .show()
         }
 
         binding.eventHiddenButton.setOnClickListener {
@@ -86,10 +104,12 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
                 binding.eventRating.visibility = View.GONE
                 binding.eventRatingNumericLayout.visibility = View.GONE
             }
+
             is QuantBase.QuantRated -> {
                 binding.eventRating.visibility = View.VISIBLE
                 binding.eventRatingNumericLayout.visibility = View.GONE
             }
+
             is QuantBase.QuantMeasure -> {
                 binding.eventRating.visibility = View.GONE
                 binding.eventRatingNumericLayout.visibility = View.VISIBLE
@@ -152,6 +172,7 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
                         is QuantBase.QuantRated -> binding.eventRating.rating.toDouble()
                         is QuantBase.QuantMeasure -> binding.eventRatingNumeric.text.toString()
                             .toDouble()
+
                         is QuantBase.QuantNote -> (-1).toDouble()
                     }, calendar.timeInMillis,
                     binding.eventNote.text.toString(),
@@ -184,12 +205,14 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
                 is EventBase.EventRated -> {
                     binding.eventRating.rating = it.rate.toFloat()
                 }
+
                 is EventBase.EventMeasure -> {
                     binding.eventRatingNumeric.setText(it.value.toString())
                     // TODO It wrong
                     binding.eventRatingNumericSeekBar.progress =
                         (it.value * SEEKBAR_MULTIPLIER).toInt()
                 }
+
                 else -> {}
             }
         }
@@ -224,10 +247,12 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
     }
 
     private fun updateIsHiddenIcon(isHidden: Boolean) {
-        binding.eventHiddenButton.setImageResource(when (isHidden) {
-            true -> R.drawable.quant_hidden
-            false -> R.drawable.quant_show
-        })
+        binding.eventHiddenButton.setImageResource(
+            when (isHidden) {
+                true -> R.drawable.quant_hidden
+                false -> R.drawable.quant_show
+            }
+        )
     }
 
     interface DialogListener {

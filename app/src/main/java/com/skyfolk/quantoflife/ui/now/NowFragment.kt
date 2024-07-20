@@ -149,7 +149,7 @@ class NowFragment : Fragment() {
                 }
             }
 
-            val useComposeDialog = true
+            val useComposeDialog = false
             val dialog = when (useComposeDialog) {
                 true -> CreateEventComposeFragment(it, listener)
                 false -> CreateEventDialogFragment(it).also { it.setDialogListener(listener) }

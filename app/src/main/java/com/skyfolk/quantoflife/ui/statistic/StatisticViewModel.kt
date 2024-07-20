@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.test.core.app.ActivityScenario.launch
 import com.github.mikephil.charting.data.BarEntry
 import com.skyfolk.quantoflife.GraphSelectedMode
 import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
@@ -64,23 +65,23 @@ class StatisticViewModel(
     val selectedFilter: LiveData<SelectedGraphFilter> = _selectedFilter
 
     fun selectGraphBar(index: Int) {
-            if (barEntryData.value is StatisticFragmentState.Entries) {
-                val value = barEntryData.value as StatisticFragmentState.Entries
+        if (barEntryData.value is StatisticFragmentState.Entries) {
+            val value = barEntryData.value as StatisticFragmentState.Entries
 
-                viewModelScope.launch {
-                    val timeInterval = _selectedFilter.value?.timeInterval ?: TimeInterval.Week
-                    val period = timeInterval.getPeriod(
-                        firstDate = value.entries[0].firstDate,
-                        index = index,
-                        startDayTime = settingsInteractor.startDayTime
-                    )
+            viewModelScope.launch {
+                val timeInterval = _selectedFilter.value?.timeInterval ?: TimeInterval.Week
+                val period = timeInterval.getPeriod(
+                    firstDate = value.entries[0].firstDate,
+                    index = index,
+                    startDayTime = settingsInteractor.startDayTime
+                )
 
-                    _navigationEvent.value = NavigateToFeedEvent(
-                        startDate = period.first,
-                        endDate = period.last
-                    )
-                }
+                _navigationEvent.value = NavigateToFeedEvent(
+                    startDate = period.first,
+                    endDate = period.last
+                )
             }
+        }
     }
 
     fun setEventFilter(position: Int, filter: QuantFilterMode) {
@@ -89,6 +90,7 @@ class StatisticViewModel(
                 settingsInteractor.selectedGraphQuantFirst = filter
                 _selectedFilter.value = _selectedFilter.value?.copy(filter = filter)
             }
+
             2 -> {
                 settingsInteractor.selectedGraphQuantSecond = filter
                 _selectedFilter.value = _selectedFilter.value?.copy(filter2 = filter)
@@ -136,27 +138,28 @@ class StatisticViewModel(
 
         // TODO Mapper GraphSelectedYearToTimeMapper
         var lastDate = when (selectedYear) {
-            GraphSelectedYearMode.All -> {
+            is GraphSelectedYearMode.All -> {
                 val calendar = dateTimeRepository.getCalendar()
                 calendar
                     .getStartDateCalendar(timeInterval, settingsInteractor.startDayTime)
                     .timeInMillis
             }
+
             is GraphSelectedYearMode.OnlyYearMode -> {
                 val calendar = dateTimeRepository.getCalendar()
                 calendar[Calendar.YEAR] = selectedYear.year
                 calendar
                     .getStartDateCalendar(timeInterval, settingsInteractor.startDayTime)
-                    .also { Log.d("skyfolk-last_week", "getEntries: ${it[Calendar.DAY_OF_MONTH]}")}
+                    .also { Log.d("skyfolk-last_week", "getEntries: ${it[Calendar.DAY_OF_MONTH]}") }
                     .timeInMillis
-                    .also { Log.d("skyfolk-last_week", "getEntries: ${it}")}
+                    .also { Log.d("skyfolk-last_week", "getEntries: ${it}") }
 
             }
         }
         lastDate = min(lastDate, dateTimeRepository.getTimeInMillis())
 
         val firstDate = when (selectedYear) {
-            GraphSelectedYearMode.All -> if (allEvents.isNotEmpty()) allEvents.first().date else lastDate
+            is GraphSelectedYearMode.All -> if (allEvents.isNotEmpty()) allEvents.first().date else lastDate
             is GraphSelectedYearMode.OnlyYearMode -> {
                 val calendar = dateTimeRepository.getCalendar()
                 calendar[Calendar.YEAR] = selectedYear.year
@@ -168,7 +171,7 @@ class StatisticViewModel(
 
         val allFilteredEvents = allEvents.filter {
             when (quantFilterMode) {
-                QuantFilterMode.All -> true
+                is QuantFilterMode.All -> true
                 is QuantFilterMode.OnlySelected -> it.quantId == quantFilterMode.quant.id
                 else -> true
             }
@@ -210,6 +213,7 @@ class StatisticViewModel(
                     lastPeriodWith = false
                     lastPeriodWithout = false
                 }
+
                 false -> {
                     when (filteredEvents.isEmpty()) {
                         true -> {
@@ -217,6 +221,7 @@ class StatisticViewModel(
                                 true -> {
                                     maximumWithout++
                                 }
+
                                 false -> {
                                     maximumWithout = 1
                                     maximumWithoutStartTime = currentPeriodStart
@@ -229,11 +234,13 @@ class StatisticViewModel(
                             lastPeriodWith = false
                             lastPeriodWithout = true
                         }
+
                         false -> {
                             when (lastPeriodWith) {
                                 true -> {
                                     maximumWith++
                                 }
+
                                 false -> {
                                     maximumWith = 1
                                     maximumWithStartTime = currentPeriodStart
@@ -256,6 +263,7 @@ class StatisticViewModel(
                         allQuants,
                         filteredEvents
                     )
+
                 Measure.TotalPhysical -> {
                     getTotal(
                         allQuants,
@@ -263,6 +271,7 @@ class StatisticViewModel(
                         QuantCategory.Physical
                     )
                 }
+
                 Measure.TotalEmotional -> {
                     getTotal(
                         allQuants,
@@ -270,6 +279,7 @@ class StatisticViewModel(
                         QuantCategory.Emotion
                     )
                 }
+
                 Measure.TotalEvolution -> {
                     getTotal(
                         allQuants,
@@ -277,11 +287,13 @@ class StatisticViewModel(
                         QuantCategory.Evolution
                     )
                 }
+
                 Measure.AverageRating ->
                     getTotalAverageStar(
                         allQuants,
                         filteredEvents
                     )
+
                 Measure.Quantity ->
                     getTotalCount(filteredEvents)
             }
@@ -290,6 +302,7 @@ class StatisticViewModel(
                 true -> {
                     result.add(BarEntry((resultCount).toFloat(), totalByPeriod.toFloat()))
                 }
+
                 else -> {}
             }
 
@@ -321,7 +334,7 @@ class StatisticViewModel(
         )
     }
 
-    fun runSearch() {
+    fun runSearch() = viewModelScope.launch {
         _barEntryData.value = StatisticFragmentState.Loading
 
         val mode = _selectedFilter.value?.selectedMode ?: GraphSelectedMode.Common
@@ -331,8 +344,6 @@ class StatisticViewModel(
         val measure = _selectedFilter.value?.measure ?: Measure.TotalCount
         val selectedYear = _selectedFilter.value?.selectedYear ?: GraphSelectedYearMode.All
         val selectedYear2 = _selectedFilter.value?.selectedYear2 ?: GraphSelectedYearMode.All
-
-        Log.d("skyfolk-graph", "runSearch: mode = $mode")
 
         viewModelScope.launch {
             val result: ArrayList<StatisticFragmentState.EntriesAndFirstDate> = arrayListOf()
@@ -351,6 +362,7 @@ class StatisticViewModel(
                         )
                     )
                 }
+
                 GraphSelectedMode.Comparison -> {
                     result.add(
                         getEntries(
@@ -375,6 +387,7 @@ class StatisticViewModel(
                         )
                     )
                 }
+
                 GraphSelectedMode.Dependence -> {
                     result.add(
                         getEntries(
