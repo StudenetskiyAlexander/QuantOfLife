@@ -1,8 +1,10 @@
 package com.skyfolk.quantoflife.ui.now.date_picker
 
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
@@ -33,121 +35,60 @@ class DatePickerConfiguration private constructor(
     val selectedMonthYearAreaColor: Color,
     val selectedMonthYearAreaShape: Shape
 ) {
-    class Builder {
-        private var height: Dp = DefaultDatePickerConfig.height
-        private var headerHeight: Dp = DefaultDatePickerConfig.headerHeight
-        private var headerTextStyle: TextStyle = DefaultDatePickerConfig.headerTextStyle
-        private var headerArrowSize: Dp = DefaultDatePickerConfig.headerArrowSize
-        private var headerArrowColor: Color = DefaultDatePickerConfig.headerArrowColor
-        private var daysNameTextStyle: TextStyle = DefaultDatePickerConfig.daysNameTextStyle
-        private var dateTextStyle: TextStyle = DefaultDatePickerConfig.dateTextStyle
-        private var selectedDateTextStyle: TextStyle = DefaultDatePickerConfig.selectedDateTextStyle
-        private var sundayTextColor: Color = DefaultDatePickerConfig.sundayTextColor
-        private var disabledDateColor: Color = DefaultDatePickerConfig.disabledDateColor
-        private var selectedDateBackgroundSize: Dp =
-            DefaultDatePickerConfig.selectedDateBackgroundSize
-        private var selectedDateBackgroundColor: Color =
-            DefaultDatePickerConfig.selectedDateBackgroundColor
-        private var selectedDateBackgroundShape: Shape =
-            DefaultDatePickerConfig.selectedDateBackgroundShape
-        private var monthYearTextStyle: TextStyle = DefaultDatePickerConfig.monthYearTextStyle
-        private var selectedMonthYearTextStyle: TextStyle =
-            DefaultDatePickerConfig.selectedMonthYearTextStyle
-        private var numberOfMonthYearRowsDisplayed: Int =
-            DefaultDatePickerConfig.numberOfMonthYearRowsDisplayed
-        private var selectedMonthYearScaleFactor: Float =
-            DefaultDatePickerConfig.selectedMonthYearScaleFactor
-        private var selectedMonthYearAreaHeight: Dp =
-            DefaultDatePickerConfig.selectedMonthYearAreaHeight
-        private var selectedMonthYearAreaColor: Color =
-            DefaultDatePickerConfig.selectedMonthYearAreaColor
-        private var selectedMonthYearAreaShape: Shape =
-            DefaultDatePickerConfig.selectedMonthYearAreaShape
-
-        fun height(height: Dp) =
-            apply { this.height = height }
-
-        fun headerHeight(height: Dp) =
-            apply { this.headerHeight = height }
-
-        fun headerTextStyle(textStyle: TextStyle) =
-            apply { this.headerTextStyle = textStyle }
-
-        fun headerArrowSize(size: Dp) =
-            apply { this.headerArrowSize = size }
-
-        fun headerArrowColor(color: Color) =
-            apply { this.headerArrowColor = color }
-
-        fun daysNameTextStyle(textStyle: TextStyle) =
-            apply { this.daysNameTextStyle = textStyle }
-
-        fun dateTextStyle(textStyle: TextStyle) =
-            apply { this.dateTextStyle = textStyle }
-
-        fun selectedDateTextStyle(textStyle: TextStyle) =
-            apply { this.selectedDateTextStyle = textStyle }
-
-        fun sundayTextColor(color: Color) =
-            apply { this.sundayTextColor = color }
-
-        fun disabledDateColor(color: Color) =
-            apply { this.disabledDateColor = color }
-
-        fun selectedDateBackgroundSize(size: Dp) =
-            apply { this.selectedDateBackgroundSize = size }
-
-        fun selectedDateBackgroundColor(color: Color) =
-            apply { this.selectedDateBackgroundColor = color }
-
-        fun selectedDateBackgroundShape(shape: Shape) =
-            apply { this.selectedDateBackgroundShape = shape }
-
-        fun monthYearTextStyle(textStyle: TextStyle) =
-            apply { this.monthYearTextStyle = textStyle }
-
-        fun selectedMonthYearTextStyle(textStyle: TextStyle) =
-            apply { this.selectedMonthYearTextStyle = textStyle }
-
-        fun selectedMonthYearScaleFactor(scaleFactor: Float) =
-            apply { this.selectedMonthYearScaleFactor = scaleFactor }
-
-        fun numberOfMonthYearRowsDisplayed(count: Int) =
-            apply { this.numberOfMonthYearRowsDisplayed = count }
-
-        fun selectedMonthYearAreaHeight(height: Dp) =
-            apply { this.selectedMonthYearAreaHeight = height }
-
-        fun selectedMonthYearAreaColor(color: Color) =
-            apply { this.selectedMonthYearAreaColor = color }
-
-        fun selectedMonthYearAreaShape(shape: Shape) =
-            apply { this.selectedMonthYearAreaShape = shape }
-
-        fun build(): DatePickerConfiguration {
-            return DatePickerConfiguration(
-                height = height,
-                headerHeight = headerHeight,
-                headerTextStyle = headerTextStyle,
-                headerArrowSize = headerArrowSize,
-                headerArrowColor = headerArrowColor,
-                daysNameTextStyle = daysNameTextStyle,
-                dateTextStyle = dateTextStyle,
-                selectedDateTextStyle = selectedDateTextStyle,
-                sundayTextColor = sundayTextColor,
-                disabledDateColor = disabledDateColor,
-                selectedDateBackgroundSize = selectedDateBackgroundSize,
-                selectedDateBackgroundColor = selectedDateBackgroundColor,
-                selectedDateBackgroundShape = selectedDateBackgroundShape,
-                monthYearTextStyle = monthYearTextStyle,
-                selectedMonthYearTextStyle = selectedMonthYearTextStyle,
-                selectedMonthYearScaleFactor = selectedMonthYearScaleFactor,
-                numberOfMonthYearRowsDisplayed = numberOfMonthYearRowsDisplayed,
-                selectedMonthYearAreaHeight = selectedMonthYearAreaHeight,
-                selectedMonthYearAreaColor = selectedMonthYearAreaColor,
-                selectedMonthYearAreaShape = selectedMonthYearAreaShape
-            )
-        }
+    companion object {
+        @Composable
+        fun builder(
+            height: Dp = DefaultDatePickerConfig.height,
+            headerHeight: Dp = DefaultDatePickerConfig.headerHeight,
+            headerTextStyle: TextStyle = DefaultDatePickerConfig.headerTextStyle(),
+            headerArrowSize: Dp = DefaultDatePickerConfig.headerArrowSize,
+            headerArrowColor: Color = DefaultDatePickerConfig.headerArrowColor(),
+            daysNameTextStyle: TextStyle = DefaultDatePickerConfig.daysNameTextStyle,
+            dateTextStyle: TextStyle = DefaultDatePickerConfig.dateTextStyle(),
+            selectedDateTextStyle: TextStyle = DefaultDatePickerConfig.selectedDateTextStyle,
+            sundayTextColor: Color = DefaultDatePickerConfig.sundayTextColor,
+            disabledDateColor: Color = DefaultDatePickerConfig.disabledDateColor,
+            selectedDateBackgroundSize: Dp =
+                DefaultDatePickerConfig.selectedDateBackgroundSize,
+            selectedDateBackgroundColor: Color =
+                DefaultDatePickerConfig.selectedDateBackgroundColor,
+            selectedDateBackgroundShape: Shape =
+                DefaultDatePickerConfig.selectedDateBackgroundShape,
+            monthYearTextStyle: TextStyle = DefaultDatePickerConfig.monthYearTextStyle(),
+            selectedMonthYearTextStyle: TextStyle =
+                DefaultDatePickerConfig.selectedMonthYearTextStyle(),
+            numberOfMonthYearRowsDisplayed: Int =
+                DefaultDatePickerConfig.numberOfMonthYearRowsDisplayed,
+            selectedMonthYearScaleFactor: Float =
+                DefaultDatePickerConfig.selectedMonthYearScaleFactor,
+            selectedMonthYearAreaHeight: Dp =
+                DefaultDatePickerConfig.selectedMonthYearAreaHeight,
+            selectedMonthYearAreaColor: Color =
+                DefaultDatePickerConfig.selectedMonthYearAreaColor,
+            selectedMonthYearAreaShape: Shape =
+                DefaultDatePickerConfig.selectedMonthYearAreaShape
+        ) = DatePickerConfiguration(
+            height = height,
+            headerHeight = headerHeight,
+            headerTextStyle = headerTextStyle,
+            headerArrowSize = headerArrowSize,
+            headerArrowColor = headerArrowColor,
+            daysNameTextStyle = daysNameTextStyle,
+            dateTextStyle = dateTextStyle,
+            selectedDateTextStyle = selectedDateTextStyle,
+            sundayTextColor = sundayTextColor,
+            disabledDateColor = disabledDateColor,
+            selectedDateBackgroundSize = selectedDateBackgroundSize,
+            selectedDateBackgroundColor = selectedDateBackgroundColor,
+            selectedDateBackgroundShape = selectedDateBackgroundShape,
+            monthYearTextStyle = monthYearTextStyle,
+            selectedMonthYearTextStyle = selectedMonthYearTextStyle,
+            selectedMonthYearScaleFactor = selectedMonthYearScaleFactor,
+            numberOfMonthYearRowsDisplayed = numberOfMonthYearRowsDisplayed,
+            selectedMonthYearAreaHeight = selectedMonthYearAreaHeight,
+            selectedMonthYearAreaColor = selectedMonthYearAreaColor,
+            selectedMonthYearAreaShape = selectedMonthYearAreaShape
+        )
     }
 }
 
@@ -159,13 +100,18 @@ class DefaultDatePickerConfig private constructor() {
 
         // Header configuration
         val headerHeight: Dp = 35.dp
-        val headerTextStyle: TextStyle = TextStyle(
+
+        @Composable
+        fun headerTextStyle(): TextStyle = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.W700,
-            color = black
+            color = black()
         )
+
         val headerArrowSize: Dp = 35.dp
-        val headerArrowColor: Color = black
+
+        @Composable
+        fun headerArrowColor(): Color = black()
 
         // Date view configuration
         val daysNameTextStyle: TextStyle = TextStyle(
@@ -173,11 +119,14 @@ class DefaultDatePickerConfig private constructor() {
             fontWeight = FontWeight.W500,
             color = grayDark
         )
-        val dateTextStyle: TextStyle = TextStyle(
+
+        @Composable
+        fun dateTextStyle(): TextStyle = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.W500,
-            color = black
+            color = black()
         )
+
         val selectedDateTextStyle: TextStyle = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.W600,
@@ -190,16 +139,20 @@ class DefaultDatePickerConfig private constructor() {
         val selectedDateBackgroundShape: Shape = CircleShape
 
         // Month Year view configuration
-        val monthYearTextStyle: TextStyle = TextStyle(
+        @Composable
+        fun monthYearTextStyle(): TextStyle = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.W500,
-            color = black.copy(alpha = 0.5f)
+            color = black().copy(alpha = 0.5f)
         )
-        val selectedMonthYearTextStyle: TextStyle = TextStyle(
+
+        @Composable
+        fun selectedMonthYearTextStyle(): TextStyle = TextStyle(
             fontSize = 17.sp,
             fontWeight = FontWeight.W600,
-            color = black.copy(alpha = 1f)
+            color = black().copy(alpha = 1f)
         )
+
         const val numberOfMonthYearRowsDisplayed: Int = 7
         const val selectedMonthYearScaleFactor: Float = 1.2f
         val selectedMonthYearAreaHeight: Dp = 35.dp
@@ -208,7 +161,12 @@ class DefaultDatePickerConfig private constructor() {
     }
 }
 
-val black = Color(0xFF333333)
+@Composable
+fun black() = when (isSystemInDarkTheme()) {
+    true -> Color(0xFFFFFFFF)
+    false -> Color(0xFF333333)
+}
+
 val white = Color(0xFFFFFFFF)
 val grayDark = Color(0xFF797979)
 val red = Color(0xFFff0000)
