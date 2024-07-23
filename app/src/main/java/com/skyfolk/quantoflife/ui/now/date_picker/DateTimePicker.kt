@@ -327,15 +327,6 @@ private fun DateView(
                 height - configuration.selectedDateBackgroundSize * 2, // because I don't want to count first two rows
                 configuration.selectedDateBackgroundSize
             )
-        repeat(30) {
-            monthDayCalendarInterator.add(Calendar.DAY_OF_MONTH, 1)
-            Text(
-                modifier = Modifier.clickable { onDaySelected(monthDayCalendarInterator) },
-                text = "${monthDayCalendarInterator[Calendar.DAY_OF_MONTH]}",
-                textAlign = TextAlign.Center,
-                style = configuration.selectedDateTextStyle
-            )
-        }
         items(count) {
             if (it < monthDayCalendarInterator[Calendar.DAY_OF_WEEK] - 1) return@items
             monthDayCalendarInterator.add(Calendar.DAY_OF_MONTH, 1)
