@@ -11,29 +11,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LiveData
+import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.databinding.FeedsFragmentComposeBinding
 import com.skyfolk.quantoflife.entity.EventBase
 import com.skyfolk.quantoflife.shared.presentation.view.BaseComposeFragment
+import com.skyfolk.quantoflife.shared.presentation.view.withNotNull
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.entity.QuantFilterMode
 import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions
-import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.*
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.DeleteEventAction
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.EditEventAction
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.EventEditedAction
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.RunSearchAction
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.SetSearchTextAction
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.SetSelectedQuantFilterModeAction
+import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentActions.SetTimeIntervalStateAction
 import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentSingleLifeEvent
 import com.skyfolk.quantoflife.ui.feeds.entity.FeedsFragmentState
-import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment
-import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
-import com.skyfolk.quantoflife.ui.theme.QuantOfLifeMainTheme
-import com.skyfolk.quantoflife.utils.setOnHideByTimeout
-import com.skyfolk.quantoflife.R
-import com.skyfolk.quantoflife.shared.presentation.view.withNotNull
 import com.skyfolk.quantoflife.ui.feeds.view.EventsList
 import com.skyfolk.quantoflife.ui.feeds.view.FilterBlock
 import com.skyfolk.quantoflife.ui.feeds.view.SeparatorLine
 import com.skyfolk.quantoflife.ui.feeds.view.TotalValues
 import com.skyfolk.quantoflife.ui.feeds.vm.FeedsViewModel
+import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment
+import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
+import com.skyfolk.quantoflife.ui.theme.QuantOfLifeMainTheme
+import com.skyfolk.quantoflife.utils.setOnHideByTimeout
 import kotlinx.coroutines.flow.StateFlow
-import org.koin.android.viewmodel.ext.android.viewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class FeedsComposeFragment :
     BaseComposeFragment<FeedsFragmentActions, FeedsFragmentState, FeedsFragmentSingleLifeEvent>() {

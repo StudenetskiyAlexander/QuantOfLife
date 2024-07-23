@@ -17,9 +17,9 @@ import com.skyfolk.quantoflife.databinding.SettingsFragmentBinding
 import com.skyfolk.quantoflife.ui.onboarding.OnBoardingActivity
 import com.skyfolk.quantoflife.utils.showConfirmDialog
 import com.skyfolk.quantoflife.utils.toDateWithoutHourAndMinutes
-import org.koin.android.viewmodel.ext.android.viewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
-import java.util.*
+import java.util.Calendar
 
 
 class SettingsFragment : Fragment() {

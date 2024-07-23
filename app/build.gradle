@@ -74,9 +74,8 @@ dependencies {
 
     implementation "dev.chrisbanes.insetter:insetter:0.6.0"
 
-    implementation 'org.koin:koin-android:2.0.1'
-    implementation "org.koin:koin-android-viewmodel:2.0.1"
-    implementation 'org.koin:koin-androidx-scope:2.0.1'
+    implementation "io.insert-koin:koin-androidx-compose:3.5.3"
+    implementation "io.insert-koin:koin-android:3.5.3"
 
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 

@@ -25,7 +25,10 @@ import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
 import com.skyfolk.quantoflife.ui.theme.QuantOfLifeMainTheme
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import org.koin.android.viewmodel.ext.android.viewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.androidx.compose.viewModel
+import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class CreateEventComposeFragment(
     val quant: QuantBase,

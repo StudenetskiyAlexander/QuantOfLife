@@ -29,7 +29,7 @@ import com.skyfolk.quantoflife.ui.entity.GraphSelectedYearMode
 import com.skyfolk.quantoflife.ui.theme.Colors
 import com.skyfolk.quantoflife.ui.theme.toInt
 import com.skyfolk.quantoflife.utils.*
-import org.koin.android.viewmodel.ext.android.viewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class StatisticFragment : Fragment(), OnChartValueSelectedListener {
 

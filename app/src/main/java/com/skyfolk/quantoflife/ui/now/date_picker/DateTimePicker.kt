@@ -1,15 +1,12 @@
 package com.skyfolk.quantoflife.ui.now.date_picker
 
+import EventOnPicker
+import TimePicker
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,16 +38,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
+import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.height
 import com.skyfolk.quantoflife.ui.now.date_picker.Size.medium
+import getTimeWithZeroText
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
+import org.koin.compose.koinInject
 import kotlin.math.ceil
 
 @Composable
 fun DateTimePicker(
+    timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper = koinInject(),
     onDateSelected: (Calendar) -> Unit,
+    events: List<EventOnPicker>,
     startDate: Calendar = Calendar.getInstance(),
     configuration: DatePickerConfiguration = DatePickerConfiguration.builder(),
 ) {
@@ -59,81 +62,102 @@ fun DateTimePicker(
     var selectedDate by remember { mutableStateOf(startDate) }
 
     Box {
-        CalendarHeader(
-            title = "${
-                currentDate.getDisplayName(
-                    Calendar.MONTH,
-                    Calendar.LONG,
-                    Locale.getDefault()
-                )
-            } ${currentDate[Calendar.YEAR]}",
-            onMonthYearClick = { isMonthYearPickerVisible = true },
-            onNextClick = {
-                val tmp = Calendar.getInstance()
-                tmp.time = currentDate.time
-                tmp.add(Calendar.MONTH, 1)
-                currentDate = tmp
-            },
-            onPreviousClick = {
-                val tmp = Calendar.getInstance()
-                tmp.time = currentDate.time
-                tmp.add(Calendar.MONTH, -1)
-                currentDate = tmp
-            },
-            configuration = configuration,
-        )
-        Box(
-            modifier = Modifier
-                .padding(top = configuration.headerHeight)
-                .height(height)
-        ) {
-            AnimatedFadeVisibility(
-                visible = !isMonthYearPickerVisible
+        Column {
+            CalendarHeader(
+                title = "${selectedDate[Calendar.DAY_OF_MONTH]} ${
+                    selectedDate.getDisplayName(
+                        Calendar.MONTH,
+                        Calendar.LONG,
+                        Locale.getDefault()
+                    )
+                } ${selectedDate[Calendar.YEAR]}, ${
+                    getTimeWithZeroText(
+                        selectedDate,
+                        Calendar.HOUR_OF_DAY
+                    )
+                }:${getTimeWithZeroText(selectedDate, Calendar.MINUTE)}",
+                onMonthYearClick = { isMonthYearPickerVisible = true },
+                onNextClick = {
+                    val tmp = Calendar.getInstance()
+                    tmp.time = currentDate.time
+                    tmp.add(Calendar.MONTH, 1)
+                    currentDate = tmp
+                },
+                onPreviousClick = {
+                    val tmp = Calendar.getInstance()
+                    tmp.time = currentDate.time
+                    tmp.add(Calendar.MONTH, -1)
+                    currentDate = tmp
+                },
+                configuration = configuration,
+            )
+
+            //Days of month
+            Box(
+                modifier = Modifier
+                    .height(height)
             ) {
-                DateView(
-                    currentDate = currentDate,
-                    selectedDate = selectedDate,
-                    onDaySelected = {
-                        Log.d("skyfolk-picker", "DateTimePicker: $it")
-                        val tmp = Calendar.getInstance()
-                        tmp.time = it.time
-                        selectedDate = tmp
-                    },
-                    height = 100.dp
-                )
+                AnimatedFadeVisibility(
+                    visible = !isMonthYearPickerVisible
+                ) {
+                    DateView(
+                        currentDate = currentDate,
+                        selectedDate = selectedDate,
+                        onDaySelected = {
+                            val tmp = Calendar.getInstance()
+                            tmp.time = it.time
+                            selectedDate = tmp
+                        },
+                        height = 100.dp
+                    )
+                }
+                AnimatedFadeVisibility(
+                    visible = isMonthYearPickerVisible
+                ) {
+                    MonthAndYearView(
+                        modifier = Modifier.align(Alignment.Center),
+                        selectedDate = currentDate,
+                        onMonthChange = {
+                            val tmp = Calendar.getInstance()
+                            tmp.time = currentDate.time
+                            tmp[Calendar.MONTH] = it
+                            currentDate = tmp
+                            isMonthYearPickerVisible = false
+                        },
+                        onYearChange = {
+                            val tmp = Calendar.getInstance()
+                            tmp.time = currentDate.time
+                            tmp[Calendar.YEAR] = it + Calendar.getInstance()[Calendar.YEAR] - 20
+                            currentDate = tmp
+                        },
+                        years = List(40) { (it + Calendar.getInstance()[Calendar.YEAR] - 20).toString() },
+                        months = List(12) {
+                            val tmp = Calendar.getInstance()
+                            tmp[Calendar.MONTH] = it
+                            tmp.getDisplayName(
+                                Calendar.MONTH,
+                                Calendar.LONG,
+                                Locale.getDefault()
+                            ) ?: ""
+                        },
+                        height = height,
+                        configuration = configuration
+                    )
+                }
             }
-            AnimatedFadeVisibility(
-                visible = isMonthYearPickerVisible
+            TimePicker(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally),
+                events = events.filter {
+                    it.time in timeIntervalToPeriodInMillisMapper.invoke(TimeInterval.Today, 0)
+                },
+                initialTimeInMinutes = currentDate[Calendar.HOUR_OF_DAY] * 60 + currentDate[Calendar.MINUTE]
             ) {
-                MonthAndYearView(
-                    modifier = Modifier.align(Alignment.Center),
-                    selectedDate = currentDate,
-                    onMonthChange = {
-                        val tmp = Calendar.getInstance()
-                        tmp.time = currentDate.time
-                        tmp[Calendar.MONTH] = it
-                        currentDate = tmp
-                        isMonthYearPickerVisible = false
-                    },
-                    onYearChange = {
-                        val tmp = Calendar.getInstance()
-                        tmp.time = currentDate.time
-                        tmp[Calendar.YEAR] = it + Calendar.getInstance()[Calendar.YEAR] - 20
-                        currentDate = tmp
-                    },
-                    years = List(40) { (it + Calendar.getInstance()[Calendar.YEAR] - 20).toString() },
-                    months = List(12) {
-                        val tmp = Calendar.getInstance()
-                        tmp[Calendar.MONTH] = it
-                        tmp.getDisplayName(
-                            Calendar.MONTH,
-                            Calendar.LONG,
-                            Locale.getDefault()
-                        ) ?: ""
-                    },
-                    height = height,
-                    configuration = configuration
-                )
+                val tmp = Calendar.getInstance()
+                tmp.time = selectedDate.time
+                tmp[Calendar.HOUR_OF_DAY] = it / 60
+                tmp[Calendar.MINUTE] = it % 60
+                selectedDate = tmp
             }
         }
     }
@@ -241,20 +265,6 @@ private fun SwipeLazyColumn(
 }
 
 @Composable
-fun AnimatedFadeVisibility(
-    visible: Boolean,
-    content: @Composable AnimatedVisibilityScope.() -> Unit
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = tween(durationMillis = 400, delayMillis = 200)),
-        exit = fadeOut(animationSpec = tween(durationMillis = 250, delayMillis = 100))
-    ) {
-        content()
-    }
-}
-
-@Composable
 private fun CalendarHeader(
     modifier: Modifier = Modifier,
     title: String,
@@ -303,7 +313,7 @@ private fun CalendarHeader(
 private fun DateView(
     modifier: Modifier = Modifier,
     currentDate: Calendar,
-    selectedDate: Calendar?,
+    selectedDate: Calendar,
     onDaySelected: (Calendar) -> Unit,
     height: Dp,
     configuration: DatePickerConfiguration = DatePickerConfiguration.builder()
@@ -324,7 +334,7 @@ private fun DateView(
         val topPaddingForItem =
             getTopPaddingForItem(
                 count,
-                height - configuration.selectedDateBackgroundSize * 2, // because I don't want to count first two rows
+                height - configuration.selectedDateBackgroundSize * 2,
                 configuration.selectedDateBackgroundSize
             )
         items(count) {
@@ -332,7 +342,7 @@ private fun DateView(
             monthDayCalendarInterator.add(Calendar.DAY_OF_MONTH, 1)
             DateViewBodyItem(
                 day = monthDayCalendarInterator.copy(),
-                isSelected = selectedDate == monthDayCalendarInterator,
+                isSelected = selectedDate.isEqualByDay(monthDayCalendarInterator),
                 isSunday = (it + 1) % 7 == 0 || (it + 1) % 7 == 6,
                 onDaySelected = onDaySelected,
                 topPaddingForItem = topPaddingForItem,
@@ -341,13 +351,6 @@ private fun DateView(
         }
     }
 }
-
-fun Calendar.copy(): Calendar {
-    val tmp = Calendar.getInstance()
-    tmp.time = this.time
-    return tmp
-}
-
 
 @Composable
 private fun DateViewBodyItem(
@@ -366,11 +369,7 @@ private fun DateViewBodyItem(
                 .padding(top = if (day[Calendar.DAY_OF_MONTH] < 7) 0.dp else topPaddingForItem)
                 .size(configuration.selectedDateBackgroundSize)
                 .clip(configuration.selectedDateBackgroundShape)
-                .noRippleClickable {
-                    onDaySelected(day).also {
-                        Log.d("skyfolk-picker", "onClick: ${day[Calendar.DAY_OF_MONTH]}")
-                    }
-                }
+                .noRippleClickable { onDaySelected(day) }
                 .background(if (isSelected) configuration.selectedDateBackgroundColor else Color.Transparent)
         ) {
             Text(
@@ -422,6 +421,7 @@ private fun getTopPaddingForItem(
 @Preview
 fun DateTimePickerPreview() {
     DateTimePicker(
-        onDateSelected = { _ -> }
+        onDateSelected = { _ -> },
+        events = listOf()
     )
 }

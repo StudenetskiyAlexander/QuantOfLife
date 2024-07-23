@@ -72,16 +72,7 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
             val fm: FragmentManager = requireActivity().supportFragmentManager
             dialog.show(fm, dialog.tag)
 
-//            binding.createEventDatePicker.visibility = View.VISIBLE
-//            binding.createEventDatePicker.setContent {
-//                val lastCalendar = settingsInteractor.lastSelectedCalendar
-//                DateTimePicker(
-//                    onDateSelected = { date ->
-//                        binding.createEventDatePicker.visibility = View.GONE
-//                    },
-////                    currentDate =
-//                )
-//            }
+            //OLD
 //            val lastCalendar = settingsInteractor.lastSelectedCalendar
 //            DatePickerDialog(
 //                requireContext(),

@@ -3,24 +3,17 @@ package com.skyfolk.quantoflife.ui.now
 import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -28,20 +21,17 @@ import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.databinding.NowFragmentBinding
 import com.skyfolk.quantoflife.entity.*
 import com.skyfolk.quantoflife.settings.SettingsInteractor
-import com.skyfolk.quantoflife.ui.goals.GoalsListDataAdapter
 import com.skyfolk.quantoflife.ui.goals.view.GoalView
 import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment.DialogListener
 import com.skyfolk.quantoflife.ui.now.create.CreateEventComposeFragment
-import com.skyfolk.quantoflife.ui.statistic.NavigateToFeedEvent
 import com.skyfolk.quantoflife.utils.setOnHideByTimeout
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import org.koin.android.viewmodel.ext.android.viewModel
 import uk.co.markormesher.android_fab.SpeedDialMenuAdapter
 import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener
 import uk.co.markormesher.android_fab.SpeedDialMenuItem
 import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class NowFragment : Fragment() {
     private val viewModel: NowViewModel by viewModel()

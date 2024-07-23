@@ -13,6 +13,16 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
 
+fun Calendar.copy(): Calendar {
+    val tmp = Calendar.getInstance()
+    tmp.time = this.time
+    return tmp
+}
+
+fun Calendar.isEqualByDay(other: Calendar): Boolean {
+    return this[Calendar.YEAR] == other[Calendar.YEAR] && this[Calendar.DAY_OF_MONTH] == other[Calendar.DAY_OF_MONTH]
+}
+
 fun Int.isLeapYear(): Boolean {
     // A year is a leap year if it is divisible by 4
     // but not divisible by 100, unless it is also divisible by 400
@@ -40,7 +50,7 @@ fun Calendar.isEqual(calendar: Calendar?): Boolean {
 
 fun Int.toDp(): Dp = (this / Resources.getSystem().displayMetrics.density).dp
 
-fun TextUnit.spToDp(density: Density): Dp{
+fun TextUnit.spToDp(density: Density): Dp {
     return with(density) {
         this@spToDp.toDp()
     }

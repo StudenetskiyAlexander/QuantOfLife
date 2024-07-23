@@ -3,7 +3,12 @@ package com.skyfolk.quantoflife
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
-import com.skyfolk.quantoflife.db.*
+import com.skyfolk.quantoflife.db.DBInteractor
+import com.skyfolk.quantoflife.db.EventsStorageInteractor
+import com.skyfolk.quantoflife.db.GoalStorageInteractor
+import com.skyfolk.quantoflife.db.IGoalStorageInteractor
+import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
+import com.skyfolk.quantoflife.db.QuantsStorageInteractor
 import com.skyfolk.quantoflife.import.ImportInteractor
 import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
@@ -15,10 +20,9 @@ import com.skyfolk.quantoflife.ui.now.create.CreateEventViewModel
 import com.skyfolk.quantoflife.ui.onboarding.OnBoardingViewModel
 import com.skyfolk.quantoflife.ui.settings.SettingsViewModel
 import com.skyfolk.quantoflife.ui.statistic.StatisticViewModel
-import dev.reformator.stacktracedecoroutinator.runtime.DecoroutinatorRuntime
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
-import org.koin.android.viewmodel.dsl.viewModel
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
