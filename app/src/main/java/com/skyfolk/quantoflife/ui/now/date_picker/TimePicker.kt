@@ -28,6 +28,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.ui.now.date_picker.black
@@ -71,8 +73,6 @@ fun TimePicker(
     var lastAngle by remember { mutableStateOf(initialTimeInMinutes.toDouble() / 2) }
     var isSelectInternalCircle by remember { mutableStateOf(initialTimeInMinutes > 60 * 12) }
 
-    Log.d("skyfolk-picker", "TimePicker: init $isSelectInternalCircle $initialTimeInMinutes")
-
     val textMeasurer = rememberTextMeasurer()
     val style = TextStyle(
         fontSize = 16.sp,
@@ -84,8 +84,19 @@ fun TimePicker(
     }
 
     eventsToDraw.addAll(events.map {
+        val tmpCalendar = Calendar.getInstance()
+        tmpCalendar.timeInMillis = it.time
+        val forEventRadius = when (tmpCalendar[Calendar.HOUR_OF_DAY] < 12) {
+            true -> bigRadius
+            false -> radius
+        }
+        val totalMinutes = tmpCalendar[Calendar.HOUR_OF_DAY] * 60 + tmpCalendar[Calendar.MINUTE]
+        val eventAngle = totalMinutes / 2
         EventToDraw(
-            time = it.time,
+            offset = center + Offset(
+                forEventRadius * cos((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f,
+                forEventRadius * sin((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f
+            ),
             icon = getBitmapFromResourceName(resourceName = it.iconName)
         )
     })
@@ -196,25 +207,26 @@ fun TimePicker(
                 forPointRadius * sin((-90 + abs(appliedAngle)) * PI / 180f).toFloat()
             )
         )
-        eventsToDraw.forEach {
-            val tmpCalendar = Calendar.getInstance()
-            tmpCalendar.timeInMillis = it.time
-            val forEventRadius = when (tmpCalendar[Calendar.HOUR_OF_DAY] < 12) {
-                true -> bigRadius
-                false -> radius
-            }
-            val totalMinutes = tmpCalendar[Calendar.HOUR_OF_DAY] * 60 + tmpCalendar[Calendar.MINUTE]
-            val eventAngle = totalMinutes / 2
-            Log.d("skyfolk-picker", "draw bitmap: angle = $eventAngle")
-            drawImageBitmap(
-                image = it.icon,
-                offset = center + Offset(
-                    forEventRadius * cos((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f,
-                    forEventRadius * sin((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f
-                ),
-                size = Size(150f, 150f)
-            )
-        }
+        drawEvents(eventsToDraw, Size(150f, 150f))
+//        eventsToDraw.forEach {
+//            val tmpCalendar = Calendar.getInstance()
+//            tmpCalendar.timeInMillis = it.time
+//            val forEventRadius = when (tmpCalendar[Calendar.HOUR_OF_DAY] < 12) {
+//                true -> bigRadius
+//                false -> radius
+//            }
+//            val totalMinutes = tmpCalendar[Calendar.HOUR_OF_DAY] * 60 + tmpCalendar[Calendar.MINUTE]
+//            val eventAngle = totalMinutes / 2
+//            Log.d("skyfolk-picker", "draw bitmap: angle = $eventAngle")
+//            drawEvents(
+//                image = it.icon,
+//                offset = center + Offset(
+//                    forEventRadius * cos((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f,
+//                    forEventRadius * sin((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f
+//                ),
+//                size = Size(150f, 150f)
+//            )
+//        }
     }
 }
 
@@ -251,22 +263,16 @@ fun getTimeWithZeroText(calendar: Calendar, period: Int): String {
     }
 }
 
-private fun DrawScope.drawImageBitmap(image: ImageBitmap, offset: Offset, size: Size) {
-    val imgWidth = image.width
-    val imgHeight = image.height
-    val scaleX = size.width / imgWidth
-    val scaleY = size.height / imgHeight
-
+private fun DrawScope.drawEvents(images: List<EventToDraw>, size: Size) =
     this.drawIntoCanvas { canvas: Canvas ->
-        canvas.translate(offset.x, offset.y)
-        canvas.scale(scaleX, scaleY)
-        canvas.drawImage(
-            image = image,
-            Offset(0f, 0f),
-            Paint()
-        )
+        images.forEach {
+            drawImage(
+                image = it.icon,
+                dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+                dstOffset = IntOffset(it.offset.x.toInt(), it.offset.y.toInt())
+            )
+        }
     }
-}
 
 @Composable
 private fun getBitmapFromResourceName(resourceName: String): ImageBitmap {
@@ -285,6 +291,6 @@ data class EventOnPicker(
 )
 
 data class EventToDraw(
-    val time: Long,
+    val offset: Offset,
     val icon: ImageBitmap
 )

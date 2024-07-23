@@ -1,12 +1,5 @@
 package com.skyfolk.quantoflife.ui.now.date_picker
 
-data class Month(
-    val name: String,
-    val numberOfDays: Int,
-    val firstDayOfMonth: Days,
-    val number: Int
-)
-
 enum class Days(val abbreviation: String, val value: String, val number: Int, val isRedDay: Boolean) {
     MONDAY("ПН", "Monday", 1, false),
     TUESDAY("ВТ", "Tuesday", 2, false),

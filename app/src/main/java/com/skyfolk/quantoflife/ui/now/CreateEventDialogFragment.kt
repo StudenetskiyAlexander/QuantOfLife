@@ -1,17 +1,12 @@
 package com.skyfolk.quantoflife.ui.now
 
-//import com.vsnappy1.datepicker.DatePicker as ComposeDatePicker
 import android.app.Activity
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.DatePicker
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
@@ -66,22 +61,12 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
         binding.eventDescription.text = quant.description
 
         binding.eventDateChoiceButton.setOnClickListener {
-            val dialog = SelectDateTimeFragment {
-                Log.d("skyfolk-picker", "onSelect: ${it}")
+            val lastCalendar = settingsInteractor.lastSelectedCalendar
+            val dialog = SelectDateTimeFragment(lastCalendar) {
+                it?.let { onDateTimeSelected(it) }
             }
             val fm: FragmentManager = requireActivity().supportFragmentManager
             dialog.show(fm, dialog.tag)
-
-            //OLD
-//            val lastCalendar = settingsInteractor.lastSelectedCalendar
-//            DatePickerDialog(
-//                requireContext(),
-//                onDateSelected,
-//                lastCalendar.get(Calendar.YEAR),
-//                lastCalendar.get(Calendar.MONTH),
-//                lastCalendar.get(Calendar.DAY_OF_MONTH)
-//            )
-//                .show()
         }
 
         binding.eventHiddenButton.setOnClickListener {
@@ -211,25 +196,9 @@ class CreateEventDialogFragment(val quant: QuantBase, private val existEvent: Ev
         return binding.root
     }
 
-    private val onDateSelected =
-        DatePickerDialog.OnDateSetListener { _: DatePicker, year: Int, month: Int, day: Int ->
-            calendar.set(Calendar.YEAR, year)
-            calendar.set(Calendar.MONTH, month)
-            calendar.set(Calendar.DAY_OF_MONTH, day)
-            TimePickerDialog(
-                requireContext(),
-                onTimeSelected,
-                calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE),
-                true
-            )
-                .show()
-        }
-    private val onTimeSelected = TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
-        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-        calendar.set(Calendar.MINUTE, minute)
+    private fun onDateTimeSelected(newCalendar: Calendar) {
+        calendar.timeInMillis = newCalendar.timeInMillis
         settingsInteractor.lastSelectedCalendar = calendar
-
         binding.eventDate.text = calendar.timeInMillis.toDate()
     }
 

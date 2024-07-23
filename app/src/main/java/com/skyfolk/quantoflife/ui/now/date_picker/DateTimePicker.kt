@@ -24,6 +24,10 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,21 +42,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.skyfolk.quantoflife.DateTimeRepository
+import com.skyfolk.quantoflife.IDateTimeRepository
+import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
+import com.skyfolk.quantoflife.ui.goals.GoalToPresentationMapper
 import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.height
 import com.skyfolk.quantoflife.ui.now.date_picker.Size.medium
 import getTimeWithZeroText
 import kotlinx.coroutines.launch
+import org.koin.android.ext.koin.androidContext
+import org.koin.compose.KoinApplication
 import java.util.Calendar
 import java.util.Locale
 import org.koin.compose.koinInject
+import org.koin.dsl.module
 import kotlin.math.ceil
 
 @Composable
 fun DateTimePicker(
     timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper = koinInject(),
-    onDateSelected: (Calendar) -> Unit,
+    onDateSelected: (Calendar?) -> Unit,
     events: List<EventOnPicker>,
     startDate: Calendar = Calendar.getInstance(),
     configuration: DatePickerConfiguration = DatePickerConfiguration.builder(),
@@ -63,8 +74,12 @@ fun DateTimePicker(
 
     Box {
         Column {
-            CalendarHeader(
-                title = "${selectedDate[Calendar.DAY_OF_MONTH]} ${
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                textAlign = TextAlign.Center,
+                text = "${selectedDate[Calendar.DAY_OF_MONTH]} ${
                     selectedDate.getDisplayName(
                         Calendar.MONTH,
                         Calendar.LONG,
@@ -76,6 +91,16 @@ fun DateTimePicker(
                         Calendar.HOUR_OF_DAY
                     )
                 }:${getTimeWithZeroText(selectedDate, Calendar.MINUTE)}",
+                style = configuration.headerTextStyle
+            )
+            CalendarHeader(
+                title = "${
+                    currentDate.getDisplayName(
+                        Calendar.MONTH,
+                        Calendar.LONG,
+                        Locale.getDefault()
+                    )
+                } ${currentDate[Calendar.YEAR]} ▼",
                 onMonthYearClick = { isMonthYearPickerVisible = true },
                 onNextClick = {
                     val tmp = Calendar.getInstance()
@@ -92,7 +117,6 @@ fun DateTimePicker(
                 configuration = configuration,
             )
 
-            //Days of month
             Box(
                 modifier = Modifier
                     .height(height)
@@ -100,16 +124,40 @@ fun DateTimePicker(
                 AnimatedFadeVisibility(
                     visible = !isMonthYearPickerVisible
                 ) {
-                    DateView(
-                        currentDate = currentDate,
-                        selectedDate = selectedDate,
-                        onDaySelected = {
+                    Column {
+                        DateView(
+                            modifier = Modifier.padding(bottom = 10.dp),
+                            currentDate = currentDate,
+                            selectedDate = selectedDate,
+                            onDaySelected = {
+                                val tmp = selectedDate.copy()
+                                tmp[Calendar.YEAR] = it[Calendar.YEAR]
+                                tmp[Calendar.MONTH] = it[Calendar.MONTH]
+                                tmp[Calendar.DAY_OF_MONTH] = it[Calendar.DAY_OF_MONTH]
+                                selectedDate = tmp
+                            },
+                            height = 100.dp
+                        )
+
+                        TimePicker(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally),
+                            events = events.filter {
+                                it.time in timeIntervalToPeriodInMillisMapper.invoke(
+                                    TimeInterval.Today,
+                                    0,
+                                    selectedDate
+                                )
+                            },
+                            initialTimeInMinutes = currentDate[Calendar.HOUR_OF_DAY] * 60 + currentDate[Calendar.MINUTE]
+                        ) {
                             val tmp = Calendar.getInstance()
-                            tmp.time = it.time
+                            tmp.time = selectedDate.time
+                            tmp[Calendar.HOUR_OF_DAY] = it / 60
+                            tmp[Calendar.MINUTE] = it % 60
                             selectedDate = tmp
-                        },
-                        height = 100.dp
-                    )
+                        }
+                    }
                 }
                 AnimatedFadeVisibility(
                     visible = isMonthYearPickerVisible
@@ -145,19 +193,23 @@ fun DateTimePicker(
                     )
                 }
             }
-            TimePicker(
+            Row(
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally),
-                events = events.filter {
-                    it.time in timeIntervalToPeriodInMillisMapper.invoke(TimeInterval.Today, 0)
-                },
-                initialTimeInMinutes = currentDate[Calendar.HOUR_OF_DAY] * 60 + currentDate[Calendar.MINUTE]
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                val tmp = Calendar.getInstance()
-                tmp.time = selectedDate.time
-                tmp[Calendar.HOUR_OF_DAY] = it / 60
-                tmp[Calendar.MINUTE] = it % 60
-                selectedDate = tmp
+                TextButton(onClick = { onDateSelected(null) }) {
+                    Text(
+                        text = "Отмена".uppercase(),
+                        style = configuration.headerTextStyle
+                    )
+                }
+                TextButton(onClick = { onDateSelected(selectedDate) }) {
+                    Text(
+                        text = "Ok".uppercase(),
+                        style = configuration.headerTextStyle
+                    )
+                }
             }
         }
     }
@@ -216,7 +268,6 @@ private fun MonthAndYearView(
     }
 }
 
-
 @Composable
 private fun SwipeLazyColumn(
     modifier: Modifier = Modifier,
@@ -240,7 +291,6 @@ private fun SwipeLazyColumn(
         listState = listState,
         onScrollingStopped = {}
     ) {
-        // I add some empty rows at the beginning and end of list to make it feel that it is a center focused list
         val count = items.size + configuration.numberOfMonthYearRowsDisplayed - 1
         items(count) {
             SliderItem(
@@ -405,7 +455,6 @@ private fun DateViewHeaderItem(
     }
 }
 
-// Not every month has same number of weeks, so to maintain the same size for calender I add padding if there are less weeks
 private fun getTopPaddingForItem(
     count: Int,
     height: Dp,
@@ -420,8 +469,17 @@ private fun getTopPaddingForItem(
 @Composable
 @Preview
 fun DateTimePickerPreview() {
-    DateTimePicker(
-        onDateSelected = { _ -> },
-        events = listOf()
-    )
+    KoinApplication(application = {
+        modules(mapperModule)
+    }) {
+        DateTimePicker(
+            onDateSelected = { _ -> },
+            events = listOf()
+        )
+    }
+}
+
+private val mapperModule = module {
+    single { TimeIntervalToPeriodInMillisMapper(get()) }
+    single<IDateTimeRepository> { DateTimeRepository() }
 }

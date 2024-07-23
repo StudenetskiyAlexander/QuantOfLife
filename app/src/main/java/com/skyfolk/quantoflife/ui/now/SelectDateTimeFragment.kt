@@ -18,8 +18,10 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import java.util.Calendar
 
-class SelectDateTimeFragment(private val onDateSelected: (Calendar) -> Unit) :
-    BottomSheetDialogFragment() {
+class SelectDateTimeFragment(
+    private val lastCalendar: Calendar,
+    private val onDateSelected: (Calendar?) -> Unit
+) : BottomSheetDialogFragment() {
 
     private val eventsStorageInteractor: EventsStorageInteractor by inject()
     private val quantsStorageInteractor: IQuantsStorageInteractor by inject()
@@ -31,12 +33,14 @@ class SelectDateTimeFragment(private val onDateSelected: (Calendar) -> Unit) :
         val binding = SelectDateTimeFragmentBinding.inflate(inflater, container, false)
 
         lifecycleScope.launch {
-
             val events = eventsStorageInteractor.getAllEvents()
-
             binding.createEventDatePicker.setContent {
                 DateTimePicker(
-                    onDateSelected = { date -> onDateSelected(date) },
+                    onDateSelected = { date ->
+                        onDateSelected(date)
+                        dismiss()
+                    },
+                    startDate = lastCalendar,
                     events = events.mapNotNull {
                         val event =
                             it.toDisplayableEvents(quantsStorageInteractor.getAllQuantsList(true))
@@ -47,7 +51,6 @@ class SelectDateTimeFragment(private val onDateSelected: (Calendar) -> Unit) :
                             )
                         }
                     }
-//                    currentDate =
                 )
             }
         }
