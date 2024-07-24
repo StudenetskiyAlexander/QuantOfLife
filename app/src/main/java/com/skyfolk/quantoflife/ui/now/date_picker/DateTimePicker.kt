@@ -38,10 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.DateTimeRepository
 import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
@@ -129,6 +132,8 @@ fun DateTimePicker(
                             modifier = Modifier.padding(bottom = 10.dp),
                             currentDate = currentDate,
                             selectedDate = selectedDate,
+                            events = events,
+                            timeIntervalToPeriodInMillisMapper = timeIntervalToPeriodInMillisMapper,
                             onDaySelected = {
                                 val tmp = selectedDate.copy()
                                 tmp[Calendar.YEAR] = it[Calendar.YEAR]
@@ -364,6 +369,8 @@ private fun DateView(
     modifier: Modifier = Modifier,
     currentDate: Calendar,
     selectedDate: Calendar,
+    timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper,
+    events: List<EventOnPicker>,
     onDaySelected: (Calendar) -> Unit,
     height: Dp,
     configuration: DatePickerConfiguration = DatePickerConfiguration.builder()
@@ -390,10 +397,18 @@ private fun DateView(
         items(count) {
             if (it < monthDayCalendarInterator[Calendar.DAY_OF_WEEK] - 1) return@items
             monthDayCalendarInterator.add(Calendar.DAY_OF_MONTH, 1)
+            val eventsCount = events.count {
+                it.time in timeIntervalToPeriodInMillisMapper.invoke(
+                    TimeInterval.Today,
+                    0,
+                    monthDayCalendarInterator
+                )
+            }
             DateViewBodyItem(
                 day = monthDayCalendarInterator.copy(),
                 isSelected = selectedDate.isEqualByDay(monthDayCalendarInterator),
                 isSunday = (it + 1) % 7 == 0 || (it + 1) % 7 == 6,
+                eventsCount = eventsCount,
                 onDaySelected = onDaySelected,
                 topPaddingForItem = topPaddingForItem,
                 configuration = configuration,
@@ -407,6 +422,7 @@ private fun DateViewBodyItem(
     day: Calendar,
     isSelected: Boolean,
     isSunday: Boolean,
+    eventsCount: Int = 0,
     onDaySelected: (Calendar) -> Unit,
     topPaddingForItem: Dp,
     configuration: DatePickerConfiguration,
@@ -432,6 +448,25 @@ private fun DateViewBodyItem(
                     else configuration.dateTextStyle.color
                 ),
             )
+            if (eventsCount>0) {
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 4.dp, end = 4.dp),
+                    text = "$eventsCount",
+                    textAlign = TextAlign.Right,
+                    style = if (isSelected) TextStyle(
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.W600,
+                        color = white
+                    )
+                    else TextStyle(
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.W600,
+                        color = black()
+                    ),
+                )
+            }
         }
     }
 }
@@ -474,7 +509,20 @@ fun DateTimePickerPreview() {
     }) {
         DateTimePicker(
             onDateSelected = { _ -> },
-            events = listOf()
+            events = listOf(
+                EventOnPicker(
+                    time = 1721811173706,
+                    iconName = "quant_lsd"
+                ),
+                EventOnPicker(
+                    time = 1721801073706,
+                    iconName = "quant_run"
+                ),
+                EventOnPicker(
+                    time = 1721401073706,
+                    iconName = "quant_sleep"
+                )
+            )
         )
     }
 }
