@@ -62,6 +62,7 @@ fun TimePicker(
 
     val eventsToDraw = mutableListOf<EventToDraw>()
     val spaceBeetweenCyrcle = 100f
+    val iconsSize = 100f
 
     var width by remember { mutableStateOf(0) }
     var height by remember { mutableStateOf(0) }
@@ -94,8 +95,8 @@ fun TimePicker(
         val eventAngle = totalMinutes / 2
         EventToDraw(
             offset = center + Offset(
-                forEventRadius * cos((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f,
-                forEventRadius * sin((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f
+                forEventRadius * cos((-90 + abs(eventAngle)) * PI / 180f).toFloat() - iconsSize / 2,
+                forEventRadius * sin((-90 + abs(eventAngle)) * PI / 180f).toFloat() - iconsSize / 2
             ),
             icon = getBitmapFromResourceName(resourceName = it.iconName)
         )
@@ -207,26 +208,7 @@ fun TimePicker(
                 forPointRadius * sin((-90 + abs(appliedAngle)) * PI / 180f).toFloat()
             )
         )
-        drawEvents(eventsToDraw, Size(150f, 150f))
-//        eventsToDraw.forEach {
-//            val tmpCalendar = Calendar.getInstance()
-//            tmpCalendar.timeInMillis = it.time
-//            val forEventRadius = when (tmpCalendar[Calendar.HOUR_OF_DAY] < 12) {
-//                true -> bigRadius
-//                false -> radius
-//            }
-//            val totalMinutes = tmpCalendar[Calendar.HOUR_OF_DAY] * 60 + tmpCalendar[Calendar.MINUTE]
-//            val eventAngle = totalMinutes / 2
-//            Log.d("skyfolk-picker", "draw bitmap: angle = $eventAngle")
-//            drawEvents(
-//                image = it.icon,
-//                offset = center + Offset(
-//                    forEventRadius * cos((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f,
-//                    forEventRadius * sin((-90 + abs(eventAngle)) * PI / 180f).toFloat() - 75f
-//                ),
-//                size = Size(150f, 150f)
-//            )
-//        }
+        drawEvents(eventsToDraw, Size(iconsSize, iconsSize))
     }
 }
 

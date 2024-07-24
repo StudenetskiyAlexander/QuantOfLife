@@ -2,7 +2,9 @@ package com.skyfolk.quantoflife.db
 
 import com.skyfolk.quantoflife.entity.EventBase
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
+import com.skyfolk.quantoflife.utils.getEndDateCalendar
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
+import com.skyfolk.quantoflife.utils.timeInMillis
 import io.realm.Realm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -144,6 +146,62 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
                 }
 
             return@withContext result
+        }
+
+    fun getAllEventsByMonth(
+        calendar: Calendar,
+        includeHidden: Boolean = true
+    ): ArrayList<EventBase>  {
+            val result = ArrayList<EventBase>()
+            val start = calendar.getStartDateCalendar(TimeInterval.Month,0).timeInMillis
+            val end = calendar.getEndDateCalendar(TimeInterval.Month,0).timeInMillis
+
+            dbInteractor.getDB().freeze().where(EventDbEntity::class.java).between("date", start, end)
+                .findAll()
+                .sortedBy { it.date }
+                .filter {
+                    !it.isHidden || includeHidden
+                }
+                .forEach { eventDbEntity ->
+                    when {
+                        (eventDbEntity.rate != null) -> {
+                            result.add(
+                                EventBase.EventRated(
+                                    eventDbEntity.id,
+                                    eventDbEntity.quantId,
+                                    eventDbEntity.date,
+                                    eventDbEntity.note,
+                                    eventDbEntity.rate!!
+                                ).apply { isHidden = eventDbEntity.isHidden }
+                            )
+                        }
+
+                        (eventDbEntity.numericValue != null) -> {
+                            result.add(
+                                EventBase.EventMeasure(
+                                    eventDbEntity.id,
+                                    eventDbEntity.quantId,
+                                    eventDbEntity.date,
+                                    eventDbEntity.note,
+                                    eventDbEntity.numericValue!!
+                                ).apply { isHidden = eventDbEntity.isHidden }
+                            )
+                        }
+
+                        else -> {
+                            result.add(
+                                EventBase.EventNote(
+                                    eventDbEntity.id,
+                                    eventDbEntity.quantId,
+                                    eventDbEntity.date,
+                                    eventDbEntity.note
+                                ).apply { isHidden = eventDbEntity.isHidden }
+                            )
+                        }
+                    }
+                }
+
+            return result
         }
 
     suspend fun alreadyHaveEvent(event: EventBase): Boolean = withContext(Dispatchers.IO) {

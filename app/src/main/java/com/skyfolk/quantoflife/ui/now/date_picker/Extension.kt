@@ -20,7 +20,9 @@ fun Calendar.copy(): Calendar {
 }
 
 fun Calendar.isEqualByDay(other: Calendar): Boolean {
-    return this[Calendar.YEAR] == other[Calendar.YEAR] && this[Calendar.DAY_OF_MONTH] == other[Calendar.DAY_OF_MONTH]
+    return this[Calendar.YEAR] == other[Calendar.YEAR] &&
+            this[Calendar.MONTH] == other[Calendar.MONTH] &&
+            this[Calendar.DAY_OF_MONTH] == other[Calendar.DAY_OF_MONTH]
 }
 
 fun Int.isLeapYear(): Boolean {

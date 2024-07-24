@@ -17,6 +17,8 @@ import com.skyfolk.quantoflife.ui.feeds.vm.FeedsViewModel
 import com.skyfolk.quantoflife.ui.goals.GoalToPresentationMapper
 import com.skyfolk.quantoflife.ui.now.NowViewModel
 import com.skyfolk.quantoflife.ui.now.create.CreateEventViewModel
+import com.skyfolk.quantoflife.ui.now.date_picker.MonthEventsForPickerProvider
+import com.skyfolk.quantoflife.ui.now.date_picker.MonthEventsForPickerProviderImpl
 import com.skyfolk.quantoflife.ui.onboarding.OnBoardingViewModel
 import com.skyfolk.quantoflife.ui.settings.SettingsViewModel
 import com.skyfolk.quantoflife.ui.statistic.StatisticViewModel
@@ -51,6 +53,7 @@ class App : Application() {
                     androidContext().resources.openRawResource(R.raw.qol_base)
                 )
             }
+            single<MonthEventsForPickerProvider> { MonthEventsForPickerProviderImpl(get(), get()) }
         }
 
         val viewModelModule = module {
@@ -59,7 +62,7 @@ class App : Application() {
             viewModel { FeedsViewModel(get(), get(), get(), get()) }
             viewModel { StatisticViewModel(get(), get(), get(), get()) }
             viewModel { OnBoardingViewModel(get()) }
-            viewModel { CreateEventViewModel(get(),get(),get()) }
+            viewModel { CreateEventViewModel(get(), get(), get()) }
         }
 
         startKoin {

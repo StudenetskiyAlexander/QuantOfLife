@@ -2,7 +2,6 @@ package com.skyfolk.quantoflife.ui.now.date_picker
 
 import EventOnPicker
 import TimePicker
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,11 +23,9 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,33 +45,40 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.DateTimeRepository
 import com.skyfolk.quantoflife.IDateTimeRepository
-import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
+import com.skyfolk.quantoflife.db.DBInteractor
+import com.skyfolk.quantoflife.db.EventsStorageInteractor
+import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
+import com.skyfolk.quantoflife.db.QuantsStorageInteractor
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
-import com.skyfolk.quantoflife.ui.goals.GoalToPresentationMapper
 import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.height
 import com.skyfolk.quantoflife.ui.now.date_picker.Size.medium
 import getTimeWithZeroText
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.compose.KoinApplication
-import java.util.Calendar
-import java.util.Locale
 import org.koin.compose.koinInject
 import org.koin.dsl.module
+import java.util.Calendar
+import java.util.Locale
 import kotlin.math.ceil
 
 @Composable
 fun DateTimePicker(
+    monthEventsForPickerProvider: MonthEventsForPickerProvider = koinInject(),
     timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper = koinInject(),
     onDateSelected: (Calendar?) -> Unit,
-    events: List<EventOnPicker>,
     startDate: Calendar = Calendar.getInstance(),
     configuration: DatePickerConfiguration = DatePickerConfiguration.builder(),
 ) {
     var isMonthYearPickerVisible by remember { mutableStateOf(false) }
     var currentDate by remember { mutableStateOf(startDate) }
     var selectedDate by remember { mutableStateOf(startDate) }
+    var eventsToShow by remember { mutableStateOf<List<EventOnPicker>>(listOf()) }
+
+    LaunchedEffect(key1 = Unit) {
+        eventsToShow = monthEventsForPickerProvider.provide(currentDate)
+    }
 
     Box {
         Column {
@@ -110,12 +115,14 @@ fun DateTimePicker(
                     tmp.time = currentDate.time
                     tmp.add(Calendar.MONTH, 1)
                     currentDate = tmp
+                    eventsToShow = monthEventsForPickerProvider.provide(currentDate)
                 },
                 onPreviousClick = {
                     val tmp = Calendar.getInstance()
                     tmp.time = currentDate.time
                     tmp.add(Calendar.MONTH, -1)
                     currentDate = tmp
+                    eventsToShow = monthEventsForPickerProvider.provide(currentDate)
                 },
                 configuration = configuration,
             )
@@ -132,7 +139,7 @@ fun DateTimePicker(
                             modifier = Modifier.padding(bottom = 10.dp),
                             currentDate = currentDate,
                             selectedDate = selectedDate,
-                            events = events,
+                            events = eventsToShow,
                             timeIntervalToPeriodInMillisMapper = timeIntervalToPeriodInMillisMapper,
                             onDaySelected = {
                                 val tmp = selectedDate.copy()
@@ -147,7 +154,7 @@ fun DateTimePicker(
                         TimePicker(
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally),
-                            events = events.filter {
+                            events = eventsToShow.filter {
                                 it.time in timeIntervalToPeriodInMillisMapper.invoke(
                                     TimeInterval.Today,
                                     0,
@@ -176,12 +183,14 @@ fun DateTimePicker(
                             tmp[Calendar.MONTH] = it
                             currentDate = tmp
                             isMonthYearPickerVisible = false
+                            eventsToShow = monthEventsForPickerProvider.provide(currentDate)
                         },
                         onYearChange = {
                             val tmp = Calendar.getInstance()
                             tmp.time = currentDate.time
                             tmp[Calendar.YEAR] = it + Calendar.getInstance()[Calendar.YEAR] - 20
                             currentDate = tmp
+                            eventsToShow = monthEventsForPickerProvider.provide(currentDate)
                         },
                         years = List(40) { (it + Calendar.getInstance()[Calendar.YEAR] - 20).toString() },
                         months = List(12) {
@@ -397,8 +406,8 @@ private fun DateView(
         items(count) {
             if (it < monthDayCalendarInterator[Calendar.DAY_OF_WEEK] - 1) return@items
             monthDayCalendarInterator.add(Calendar.DAY_OF_MONTH, 1)
-            val eventsCount = events.count {
-                it.time in timeIntervalToPeriodInMillisMapper.invoke(
+            val eventsCount = events.count { event ->
+                event.time in timeIntervalToPeriodInMillisMapper.invoke(
                     TimeInterval.Today,
                     0,
                     monthDayCalendarInterator
@@ -448,7 +457,7 @@ private fun DateViewBodyItem(
                     else configuration.dateTextStyle.color
                 ),
             )
-            if (eventsCount>0) {
+            if (eventsCount > 0) {
                 Text(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -505,29 +514,35 @@ private fun getTopPaddingForItem(
 @Preview
 fun DateTimePickerPreview() {
     KoinApplication(application = {
-        modules(mapperModule)
+        modules(previewModule)
     }) {
         DateTimePicker(
-            onDateSelected = { _ -> },
-            events = listOf(
-                EventOnPicker(
-                    time = 1721811173706,
-                    iconName = "quant_lsd"
-                ),
-                EventOnPicker(
-                    time = 1721801073706,
-                    iconName = "quant_run"
-                ),
-                EventOnPicker(
-                    time = 1721401073706,
-                    iconName = "quant_sleep"
-                )
-            )
+            onDateSelected = { _ -> }
         )
     }
 }
 
-private val mapperModule = module {
+private val previewModule = module {
+    single<MonthEventsForPickerProvider> {
+        object : MonthEventsForPickerProvider {
+            override fun provide(currentMonth: Calendar): List<EventOnPicker> {
+                return listOf(
+                    EventOnPicker(
+                        time = 1721811173706,
+                        iconName = "quant_lsd"
+                    ),
+                    EventOnPicker(
+                        time = 1721801073706,
+                        iconName = "quant_run"
+                    ),
+                    EventOnPicker(
+                        time = 1721401073706,
+                        iconName = "quant_sleep"
+                    )
+                )
+            }
+        }
+    }
     single { TimeIntervalToPeriodInMillisMapper(get()) }
     single<IDateTimeRepository> { DateTimeRepository() }
 }
