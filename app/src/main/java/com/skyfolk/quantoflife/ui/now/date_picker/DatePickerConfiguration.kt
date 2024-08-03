@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 class DatePickerConfiguration private constructor(
-    val height: Dp,
     val headerHeight: Dp,
     val headerTextStyle: TextStyle,
     val headerArrowSize: Dp,
@@ -38,7 +37,6 @@ class DatePickerConfiguration private constructor(
     companion object {
         @Composable
         fun builder(
-            height: Dp = DefaultDatePickerConfig.height,
             headerHeight: Dp = DefaultDatePickerConfig.headerHeight,
             headerTextStyle: TextStyle = DefaultDatePickerConfig.headerTextStyle(),
             headerArrowSize: Dp = DefaultDatePickerConfig.headerArrowSize,
@@ -68,7 +66,6 @@ class DatePickerConfiguration private constructor(
             selectedMonthYearAreaShape: Shape =
                 DefaultDatePickerConfig.selectedMonthYearAreaShape
         ) = DatePickerConfiguration(
-            height = height,
             headerHeight = headerHeight,
             headerTextStyle = headerTextStyle,
             headerArrowSize = headerArrowSize,
@@ -96,7 +93,8 @@ class DatePickerConfiguration private constructor(
 class DefaultDatePickerConfig private constructor() {
 
     companion object {
-        val height: Dp = 500.dp
+        val timePickerHeight = 300.dp
+        val monthHeight = 220.dp
 
         // Header configuration
         val headerHeight: Dp = 35.dp

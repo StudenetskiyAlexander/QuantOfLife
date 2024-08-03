@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -36,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,7 +50,8 @@ import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.IDateTimeRepository
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
-import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.height
+import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.monthHeight
+import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.timePickerHeight
 import com.skyfolk.quantoflife.ui.now.date_picker.Size.medium
 import com.skyfolk.quantoflife.ui.now.date_picker.preview.EVENTS
 import getTimeWithZeroText
@@ -64,6 +69,7 @@ fun DateTimePicker(
     timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper = koinInject(),
     onDateSelected: (Calendar?) -> Unit,
     startDate: Calendar = Calendar.getInstance(),
+    onlyDataWithoutTime: Boolean = false,
     configuration: DatePickerConfiguration = DatePickerConfiguration.builder(),
 ) {
     var isMonthYearPickerVisible by remember { mutableStateOf(false) }
@@ -124,7 +130,12 @@ fun DateTimePicker(
 
             Box(
                 modifier = Modifier
-                    .height(height)
+                    .height(
+                        when (onlyDataWithoutTime) {
+                            true -> monthHeight
+                            false -> monthHeight + timePickerHeight
+                        }
+                    )
             ) {
                 AnimatedFadeVisibility(
                     visible = !isMonthYearPickerVisible
@@ -142,27 +153,28 @@ fun DateTimePicker(
                                 tmp[Calendar.MONTH] = it[Calendar.MONTH]
                                 tmp[Calendar.DAY_OF_MONTH] = it[Calendar.DAY_OF_MONTH]
                                 selectedDate = tmp
-                            },
-                            height = 100.dp
+                            }
                         )
 
-                        TimePicker(
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally),
-                            events = eventsToShow.filter {
-                                it.time in timeIntervalToPeriodInMillisMapper.invoke(
-                                    TimeInterval.Today,
-                                    0,
-                                    selectedDate
-                                )
-                            },
-                            initialTimeInMinutes = currentDate[Calendar.HOUR_OF_DAY] * 60 + currentDate[Calendar.MINUTE]
-                        ) {
-                            val tmp = Calendar.getInstance()
-                            tmp.time = selectedDate.time
-                            tmp[Calendar.HOUR_OF_DAY] = it / 60
-                            tmp[Calendar.MINUTE] = it % 60
-                            selectedDate = tmp
+                        if (onlyDataWithoutTime.not()) {
+                            TimePicker(
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally),
+                                events = eventsToShow.filter {
+                                    it.time in timeIntervalToPeriodInMillisMapper.invoke(
+                                        TimeInterval.Today,
+                                        0,
+                                        selectedDate
+                                    )
+                                },
+                                initialTimeInMinutes = currentDate[Calendar.HOUR_OF_DAY] * 60 + currentDate[Calendar.MINUTE]
+                            ) {
+                                val tmp = Calendar.getInstance()
+                                tmp.time = selectedDate.time
+                                tmp[Calendar.HOUR_OF_DAY] = it / 60
+                                tmp[Calendar.MINUTE] = it % 60
+                                selectedDate = tmp
+                            }
                         }
                     }
                 }
@@ -177,13 +189,13 @@ fun DateTimePicker(
                             tmp.time = currentDate.time
                             tmp[Calendar.MONTH] = it
                             currentDate = tmp
-                            isMonthYearPickerVisible = false
                             eventsToShow = monthEventsForPickerProvider.provide(currentDate)
                         },
                         onYearChange = {
                             val tmp = Calendar.getInstance()
                             tmp.time = currentDate.time
-                            tmp[Calendar.YEAR] = it + Calendar.getInstance()[Calendar.YEAR] - 20
+                            tmp[Calendar.YEAR] =
+                                it + Calendar.getInstance()[Calendar.YEAR] - 20
                             currentDate = tmp
                             eventsToShow = monthEventsForPickerProvider.provide(currentDate)
                         },
@@ -197,7 +209,10 @@ fun DateTimePicker(
                                 Locale.getDefault()
                             ) ?: ""
                         },
-                        height = height,
+                        height = when (onlyDataWithoutTime) {
+                            true -> monthHeight
+                            false -> monthHeight + timePickerHeight
+                        },
                         configuration = configuration
                     )
                 }
@@ -207,13 +222,23 @@ fun DateTimePicker(
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = { onDateSelected(null) }) {
+                TextButton(onClick = {
+                    when (isMonthYearPickerVisible) {
+                        true -> isMonthYearPickerVisible = false
+                        false -> onDateSelected(null)
+                    }
+                }) {
                     Text(
                         text = "Отмена".uppercase(),
                         style = configuration.headerTextStyle
                     )
                 }
-                TextButton(onClick = { onDateSelected(selectedDate) }) {
+                TextButton(onClick = {
+                    when (isMonthYearPickerVisible) {
+                        true -> isMonthYearPickerVisible = false
+                        false -> onDateSelected(selectedDate)
+                    }
+                }) {
                     Text(
                         text = "Ok".uppercase(),
                         style = configuration.headerTextStyle
@@ -291,7 +316,7 @@ private fun SwipeLazyColumn(
     var isAutoScrolling by remember { mutableStateOf(false) }
     val listState = rememberLazyListState(selectedIndex)
     SwipeLazyColumn(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(rememberNestedScrollInteropConnection()),
         selectedIndex = selectedIndex,
         onSelectedIndexChange = onSelectedIndexChange,
         isAutoScrolling = isAutoScrolling,
@@ -376,7 +401,6 @@ private fun DateView(
     timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper,
     events: List<EventOnPicker>,
     onDaySelected: (Calendar) -> Unit,
-    height: Dp,
     configuration: DatePickerConfiguration = DatePickerConfiguration.builder()
 ) {
     val monthDayCalendarInterator = Calendar.getInstance()
@@ -392,12 +416,7 @@ private fun DateView(
             DateViewHeaderItem(day = it, configuration = configuration)
         }
         val count = numberOfDays + monthDayCalendarInterator[Calendar.DAY_OF_WEEK] - 1
-        val topPaddingForItem =
-            getTopPaddingForItem(
-                count,
-                height - configuration.selectedDateBackgroundSize * 2,
-                configuration.selectedDateBackgroundSize
-            )
+
         items(count) {
             if (it < monthDayCalendarInterator[Calendar.DAY_OF_WEEK] - 1) return@items
             monthDayCalendarInterator.add(Calendar.DAY_OF_MONTH, 1)
@@ -414,7 +433,7 @@ private fun DateView(
                 isSunday = (it + 1) % 7 == 0 || (it + 1) % 7 == 6,
                 eventsCount = eventsCount,
                 onDaySelected = onDaySelected,
-                topPaddingForItem = topPaddingForItem,
+                topPaddingForItem = 0.dp,
                 configuration = configuration,
             )
         }
@@ -494,17 +513,6 @@ private fun DateViewHeaderItem(
     }
 }
 
-private fun getTopPaddingForItem(
-    count: Int,
-    height: Dp,
-    size: Dp
-): Dp {
-    val numberOfRowsVisible = ceil(count.toDouble() / 7) - 1
-    val result =
-        (height - (size * numberOfRowsVisible.toInt()) - medium) / numberOfRowsVisible.toInt()
-    return if (result > 0.dp) result else 0.dp
-}
-
 @Composable
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 fun DateTimePickerPreview() {
@@ -514,6 +522,7 @@ fun DateTimePickerPreview() {
         Box(modifier = Modifier.background(Color.Black)) {
             DateTimePicker(
                 onDateSelected = { _ -> },
+                onlyDataWithoutTime = false,
                 startDate = previewDateTimeRepository.getCalendar()
             )
         }
@@ -532,7 +541,7 @@ private val previewModule = module {
     single { TimeIntervalToPeriodInMillisMapper(previewDateTimeRepository) }
 }
 
-private val previewDateTimeRepository = object:IDateTimeRepository {
+private val previewDateTimeRepository = object : IDateTimeRepository {
     override fun getTimeInMillis(): Long {
         return 1721801073706
     }

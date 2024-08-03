@@ -13,6 +13,7 @@ import java.util.Calendar
 
 class SelectDateTimeFragment(
     private val lastCalendar: Calendar,
+    private val onlyDataWithNoTime: Boolean = false,
     private val onDateSelected: (Calendar?) -> Unit
 ) : BottomSheetDialogFragment() {
 
@@ -28,6 +29,7 @@ class SelectDateTimeFragment(
                     onDateSelected(date)
                     dismiss()
                 },
+                onlyDataWithoutTime = onlyDataWithNoTime,
                 startDate = lastCalendar
             )
         }

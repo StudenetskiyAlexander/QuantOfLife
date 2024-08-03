@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.timePickerHeight
 import com.skyfolk.quantoflife.ui.now.date_picker.black
 import java.util.Calendar
 import kotlin.math.PI
@@ -88,7 +89,7 @@ fun TimePicker(
 
     Canvas(modifier = modifier
         .fillMaxWidth()
-        .height(300.dp)
+        .height(timePickerHeight)
         .onGloballyPositioned {
             width = it.size.width
             height = it.size.height
