@@ -1,6 +1,8 @@
-import android.util.Log
+import android.content.res.Configuration
 import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -11,14 +13,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -28,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -35,18 +35,10 @@ import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.ui.now.date_picker.black
 import java.util.Calendar
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
-
-val ColorPrimary = Color(0xFF1c2026)
-val LightGreen = Color(0xFF8dc387)
-val ProgressBarBg = Color(0xFFFFE9DD)
-val ProgressBarProgress = Color(0xFFE08868)
-val ProgressBarTint = Color(0xFFE1BAAA)
-
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -54,15 +46,15 @@ fun TimePicker(
     modifier: Modifier = Modifier,
     events: List<EventOnPicker>,
     padding: Float = 20f,
-    stroke: Float = 15f,
-    cap: StrokeCap = StrokeCap.Round,
     initialTimeInMinutes: Int = 0,
     onProgressChanged: (timeInMinutes: Int) -> Unit,
 ) {
 
     val eventsToDraw = mutableListOf<EventToDraw>()
-    val spaceBeetweenCyrcle = 100f
-    val iconsSize = 100f
+
+    val spaceBeetweenCyrcle = 120f
+    val iconsSize = 130
+    val stroke = 10f
 
     var width by remember { mutableStateOf(0) }
     var height by remember { mutableStateOf(0) }
@@ -70,13 +62,13 @@ fun TimePicker(
     var bigRadius by remember { mutableStateOf(0f) }
     var center by remember { mutableStateOf(Offset.Zero) }
 
-    var appliedAngle by remember { mutableStateOf(initialTimeInMinutes.toDouble() / 2) }
-    var lastAngle by remember { mutableStateOf(initialTimeInMinutes.toDouble() / 2) }
+    var appliedAngle by remember { mutableStateOf(initialTimeInMinutes.toFloat() / 2) }
+    var lastAngle by remember { mutableStateOf(initialTimeInMinutes.toFloat() / 2) }
     var isSelectInternalCircle by remember { mutableStateOf(initialTimeInMinutes > 60 * 12) }
 
     val textMeasurer = rememberTextMeasurer()
     val style = TextStyle(
-        fontSize = 16.sp,
+        fontSize = 25.sp,
         fontWeight = FontWeight.W700,
         color = black()
     )
@@ -87,24 +79,16 @@ fun TimePicker(
     eventsToDraw.addAll(events.map {
         val tmpCalendar = Calendar.getInstance()
         tmpCalendar.timeInMillis = it.time
-        val forEventRadius = when (tmpCalendar[Calendar.HOUR_OF_DAY] < 12) {
-            true -> bigRadius
-            false -> radius
-        }
         val totalMinutes = tmpCalendar[Calendar.HOUR_OF_DAY] * 60 + tmpCalendar[Calendar.MINUTE]
-        val eventAngle = totalMinutes / 2
         EventToDraw(
-            offset = center + Offset(
-                forEventRadius * cos((-90 + abs(eventAngle)) * PI / 180f).toFloat() - iconsSize / 2,
-                forEventRadius * sin((-90 + abs(eventAngle)) * PI / 180f).toFloat() - iconsSize / 2
-            ),
+            timeInMinutes = totalMinutes,
             icon = getBitmapFromResourceName(resourceName = it.iconName)
         )
     })
 
     Canvas(modifier = modifier
         .fillMaxWidth()
-        .height(250.dp)
+        .height(300.dp)
         .onGloballyPositioned {
             width = it.size.width
             height = it.size.height
@@ -160,31 +144,29 @@ fun TimePicker(
             return@pointerInteropFilter true
         }
     ) {
-        drawArc(
-            color = ProgressBarBg,
-            startAngle = -90f,
-            sweepAngle = 360f,
-            useCenter = false,
-            topLeft = center - Offset(radius, radius),
-            size = Size(radius * 2, radius * 2),
-            style = Stroke(
-                width = stroke,
-                cap = cap
+        val points = mutableListOf<Offset>()
+        val delta = 10f
+        val stepAngle = 30f
+        val endAngle = 630f - stepAngle
+        var currentAngle = -90f - stepAngle
+        while (currentAngle <= endAngle) {
+            currentAngle += stepAngle
+            val currentAngleInGradus = currentAngle * PI / 180f
+            points.add(
+                getSpiralOffsetByAngle(
+                    angle = currentAngleInGradus.toFloat(),
+                    radius = bigRadius,
+                    delta = delta,
+                    center = center
+                )
             )
+        }
+        drawPoints(
+            points = points,
+            pointMode = PointMode.Polygon,
+            color = style.color,
+            strokeWidth = stroke
         )
-        drawArc(
-            color = ProgressBarBg,
-            startAngle = -90f,
-            sweepAngle = 360f,
-            useCenter = false,
-            topLeft = center - Offset(bigRadius, bigRadius),
-            size = Size(bigRadius * 2, bigRadius * 2),
-            style = Stroke(
-                width = stroke,
-                cap = cap
-            )
-        )
-        //TODO Draw line
 
         drawText(
             textMeasurer = textMeasurer,
@@ -195,28 +177,66 @@ fun TimePicker(
                 y = center.y - textLayoutResult.size.height / 2,
             )
         )
-
-        val forPointRadius = when (isSelectInternalCircle) {
-            true -> radius
-            false -> bigRadius
-        }
-        drawCircle(
-            color = LightGreen,
-            radius = ((stroke * 5.0) / 3.0).toFloat(),
-            center = center + Offset(
-                forPointRadius * cos((-90 + abs(appliedAngle)) * PI / 180f).toFloat(),
-                forPointRadius * sin((-90 + abs(appliedAngle)) * PI / 180f).toFloat()
-            )
+        drawLine(
+            color = style.color,
+            start = getSpiralOffsetByAngle(
+                angle = (getAngleForCircleAndIcons(
+                    appliedAngle,
+                    isSelectInternalCircle
+                ) / 180 * PI - PI / 2).toFloat(),
+                radius = bigRadius + 30,
+                delta = delta,
+                center = center
+            ),
+            end = getSpiralOffsetByAngle(
+                angle = (getAngleForCircleAndIcons(
+                    appliedAngle,
+                    isSelectInternalCircle
+                ) / 180 * PI - PI / 2).toFloat(),
+                radius = bigRadius - 30,
+                delta = delta,
+                center = center
+            ),
+            strokeWidth = stroke
         )
-        drawEvents(eventsToDraw, Size(iconsSize, iconsSize))
+        drawEvents(
+            eventsToDraw,
+            iconsSize,
+            radius = bigRadius,
+            delta = delta,
+            center = center
+        )
     }
 }
 
-private fun deltaAngle(x: Float, y: Float): Double {
-    return Math.toDegrees(atan2(y.toDouble(), x.toDouble()))
+private fun getAngleForCircleAndIcons(appliedAngle: Float, isInternalCircle: Boolean): Float {
+    val appliedAngleWithoutKnownAboutCircle = when (appliedAngle >= 360) {
+        true -> appliedAngle - 360
+        false -> appliedAngle
+    }
+    return when (isInternalCircle) {
+        true -> appliedAngleWithoutKnownAboutCircle + 360
+        false -> appliedAngleWithoutKnownAboutCircle
+    }
 }
 
-private fun calculateTimeFromAngle(angle: Double, isInternalCircle: Boolean): Calendar {
+private fun getSpiralOffsetByAngle(
+    angle: Float,
+    radius: Float,
+    delta: Float,
+    center: Offset
+): Offset {
+    return Offset(
+        (radius - angle * delta) * cos(angle) + center.x,
+        (radius - angle * delta) * sin(angle) + center.y + delta
+    )
+}
+
+private fun deltaAngle(x: Float, y: Float): Float {
+    return Math.toDegrees(atan2(y, x).toDouble()).toFloat()
+}
+
+private fun calculateTimeFromAngle(angle: Float, isInternalCircle: Boolean): Calendar {
     val calendar = Calendar.getInstance()
     val currentAngle = angle % 360
     calendar[Calendar.HOUR_OF_DAY] = (currentAngle / 30).toInt() + when (isInternalCircle) {
@@ -227,7 +247,7 @@ private fun calculateTimeFromAngle(angle: Double, isInternalCircle: Boolean): Ca
     return calendar
 }
 
-private fun getTextFromAngle(angle: Double, isInternalCircle: Boolean): String {
+private fun getTextFromAngle(angle: Float, isInternalCircle: Boolean): String {
     val calendar = calculateTimeFromAngle(angle, isInternalCircle)
     return "${getTimeWithZeroText(calendar, Calendar.HOUR_OF_DAY)}:${
         getTimeWithZeroText(
@@ -245,16 +265,32 @@ fun getTimeWithZeroText(calendar: Calendar, period: Int): String {
     }
 }
 
-private fun DrawScope.drawEvents(images: List<EventToDraw>, size: Size) =
-    this.drawIntoCanvas { canvas: Canvas ->
-        images.forEach {
-            drawImage(
-                image = it.icon,
-                dstSize = IntSize(size.width.toInt(), size.height.toInt()),
-                dstOffset = IntOffset(it.offset.x.toInt(), it.offset.y.toInt())
+private fun DrawScope.drawEvents(
+    images: List<EventToDraw>,
+    size: Int,
+    radius: Float,
+    delta: Float,
+    center: Offset
+) = this.drawIntoCanvas { canvas: Canvas ->
+    images.forEach {
+        val offset = getSpiralOffsetByAngle(
+            angle = (getAngleForCircleAndIcons(
+                it.timeInMinutes.toFloat() / 2, it.isInternalCircle
+            ) / 180 * PI - PI / 2).toFloat(),
+            radius = radius,
+            delta = delta,
+            center = center
+        )
+        drawImage(
+            image = it.icon,
+            dstSize = IntSize(size, size),
+            dstOffset = IntOffset(
+                offset.x.toInt() - size / 2,
+                offset.y.toInt() - size / 2
             )
-        }
+        )
     }
+}
 
 @Composable
 private fun getBitmapFromResourceName(resourceName: String): ImageBitmap {
@@ -273,6 +309,21 @@ data class EventOnPicker(
 )
 
 data class EventToDraw(
-    val offset: Offset,
+    val timeInMinutes: Int,
     val icon: ImageBitmap
-)
+) {
+    val isInternalCircle = timeInMinutes > 60 * 12
+}
+
+@Composable
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+fun TimePickerPreview() {
+    Box(modifier = Modifier.background(Color.Black)) {
+        TimePicker(
+            initialTimeInMinutes = 1200,
+            events = listOf()
+        ) {
+
+        }
+    }
+}

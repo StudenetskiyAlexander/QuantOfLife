@@ -96,7 +96,7 @@ class DatePickerConfiguration private constructor(
 class DefaultDatePickerConfig private constructor() {
 
     companion object {
-        val height: Dp = 450.dp
+        val height: Dp = 500.dp
 
         // Header configuration
         val headerHeight: Dp = 35.dp

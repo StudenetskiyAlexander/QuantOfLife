@@ -2,6 +2,7 @@ package com.skyfolk.quantoflife.ui.now.date_picker
 
 import EventOnPicker
 import TimePicker
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,11 +19,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,19 +43,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.skyfolk.quantoflife.DateTimeRepository
 import com.skyfolk.quantoflife.IDateTimeRepository
-import com.skyfolk.quantoflife.db.DBInteractor
-import com.skyfolk.quantoflife.db.EventsStorageInteractor
-import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
-import com.skyfolk.quantoflife.db.QuantsStorageInteractor
 import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.height
 import com.skyfolk.quantoflife.ui.now.date_picker.Size.medium
+import com.skyfolk.quantoflife.ui.now.date_picker.preview.EVENTS
 import getTimeWithZeroText
 import kotlinx.coroutines.launch
-import org.koin.android.ext.koin.androidContext
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.dsl.module
@@ -353,7 +348,7 @@ private fun CalendarHeader(
 
         Row(modifier = Modifier.align(Alignment.CenterEnd)) {
             Icon(
-                imageVector = Icons.Rounded.KeyboardArrowLeft,
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                 contentDescription = "leftArrow",
                 tint = configuration.headerArrowColor,
                 modifier = Modifier
@@ -362,7 +357,7 @@ private fun CalendarHeader(
             )
             Spacer(modifier = Modifier.width(medium))
             Icon(
-                imageVector = Icons.Rounded.KeyboardArrowRight,
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                 contentDescription = "rightArrow",
                 tint = configuration.headerArrowColor,
                 modifier = Modifier
@@ -511,14 +506,17 @@ private fun getTopPaddingForItem(
 }
 
 @Composable
-@Preview
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 fun DateTimePickerPreview() {
     KoinApplication(application = {
         modules(previewModule)
     }) {
-        DateTimePicker(
-            onDateSelected = { _ -> }
-        )
+        Box(modifier = Modifier.background(Color.Black)) {
+            DateTimePicker(
+                onDateSelected = { _ -> },
+                startDate = previewDateTimeRepository.getCalendar()
+            )
+        }
     }
 }
 
@@ -526,23 +524,20 @@ private val previewModule = module {
     single<MonthEventsForPickerProvider> {
         object : MonthEventsForPickerProvider {
             override fun provide(currentMonth: Calendar): List<EventOnPicker> {
-                return listOf(
-                    EventOnPicker(
-                        time = 1721811173706,
-                        iconName = "quant_lsd"
-                    ),
-                    EventOnPicker(
-                        time = 1721801073706,
-                        iconName = "quant_run"
-                    ),
-                    EventOnPicker(
-                        time = 1721401073706,
-                        iconName = "quant_sleep"
-                    )
-                )
+                return EVENTS
             }
         }
     }
-    single { TimeIntervalToPeriodInMillisMapper(get()) }
-    single<IDateTimeRepository> { DateTimeRepository() }
+    single<IDateTimeRepository> { previewDateTimeRepository }
+    single { TimeIntervalToPeriodInMillisMapper(previewDateTimeRepository) }
+}
+
+private val previewDateTimeRepository = object:IDateTimeRepository {
+    override fun getTimeInMillis(): Long {
+        return 1721801073706
+    }
+
+    override fun getCalendar(): Calendar {
+        return Calendar.getInstance().also { it.timeInMillis = 1721801073706 }
+    }
 }
