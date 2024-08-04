@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -23,19 +25,26 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.timePickerHeight
 import com.skyfolk.quantoflife.ui.now.date_picker.black
+import com.skyfolk.quantoflife.ui.now.date_picker.preview.EVENTS
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
@@ -56,18 +65,23 @@ fun TimePicker(
     val spaceBeetweenCyrcle = 120f
     val iconsSize = 130
     val stroke = 10f
+    val spiralDelta = 13f
+    val stepAngle = 30f
 
+    val coroutineScope = rememberCoroutineScope()
     var width by remember { mutableStateOf(0) }
     var height by remember { mutableStateOf(0) }
     var radius by remember { mutableStateOf(0f) }
     var bigRadius by remember { mutableStateOf(0f) }
     var center by remember { mutableStateOf(Offset.Zero) }
+    var tipEvent by remember { mutableStateOf<EventToDraw?>(null) }
 
     var appliedAngle by remember { mutableStateOf(initialTimeInMinutes.toFloat() / 2) }
     var lastAngle by remember { mutableStateOf(initialTimeInMinutes.toFloat() / 2) }
     var isSelectInternalCircle by remember { mutableStateOf(initialTimeInMinutes > 60 * 12) }
 
     val textMeasurer = rememberTextMeasurer()
+    val tipMeasurer = rememberTextMeasurer()
     val style = TextStyle(
         fontSize = 25.sp,
         fontWeight = FontWeight.W700,
@@ -77,13 +91,32 @@ fun TimePicker(
         textMeasurer.measure(getTextFromAngle(lastAngle, isSelectInternalCircle), style)
     }
 
-    eventsToDraw.addAll(events.map {
+    eventsToDraw.addAll(events.thinOut(60*60*1000).map {
         val tmpCalendar = Calendar.getInstance()
         tmpCalendar.timeInMillis = it.time
         val totalMinutes = tmpCalendar[Calendar.HOUR_OF_DAY] * 60 + tmpCalendar[Calendar.MINUTE]
+        val isInternalCircle = totalMinutes > 60 * 12
+        val offset = getSpiralOffsetByAngle(
+            angle = (getAngleForCircleAndIcons(
+                totalMinutes.toFloat() / 2, isInternalCircle
+            ) / 180 * PI - PI / 2).toFloat(),
+            radius = bigRadius,
+            delta = spiralDelta,
+            center = center
+        )
         EventToDraw(
-            timeInMinutes = totalMinutes,
-            icon = getBitmapFromResourceName(resourceName = it.iconName)
+            offset = offset.copy(
+                x = offset.x - iconsSize / 2,
+                y = offset.y - iconsSize / 2
+            ),
+            comment = it.comment,
+            icon = getBitmapFromResourceName(resourceName = it.iconName),
+            rectangle = Rect(
+                left = offset.x - iconsSize / 2,
+                top = offset.y - iconsSize / 2,
+                right = offset.x + iconsSize / 2,
+                bottom = offset.y + iconsSize / 2
+            )
         )
     })
 
@@ -103,6 +136,15 @@ fun TimePicker(
         .pointerInteropFilter {
             when (it.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    eventsToDraw.forEach { event ->
+                        if (event.rectangle.contains(Offset(it.x, it.y))) {
+                            tipEvent = event
+                            coroutineScope.launch {
+                                delay(3000)
+                                tipEvent = null
+                            }
+                        }
+                    }
                     val xRadiusRange = center.x - radius..center.x + radius
                     val yRadiusRange = center.y - radius..center.y + radius
                     isSelectInternalCircle = (it.x in xRadiusRange && it.y in yRadiusRange)
@@ -146,8 +188,7 @@ fun TimePicker(
         }
     ) {
         val points = mutableListOf<Offset>()
-        val delta = 10f
-        val stepAngle = 30f
+
         val endAngle = 630f - stepAngle
         var currentAngle = -90f - stepAngle
         while (currentAngle <= endAngle) {
@@ -157,7 +198,7 @@ fun TimePicker(
                 getSpiralOffsetByAngle(
                     angle = currentAngleInGradus.toFloat(),
                     radius = bigRadius,
-                    delta = delta,
+                    delta = spiralDelta,
                     center = center
                 )
             )
@@ -186,7 +227,7 @@ fun TimePicker(
                     isSelectInternalCircle
                 ) / 180 * PI - PI / 2).toFloat(),
                 radius = bigRadius + 30,
-                delta = delta,
+                delta = spiralDelta,
                 center = center
             ),
             end = getSpiralOffsetByAngle(
@@ -195,19 +236,52 @@ fun TimePicker(
                     isSelectInternalCircle
                 ) / 180 * PI - PI / 2).toFloat(),
                 radius = bigRadius - 30,
-                delta = delta,
+                delta = spiralDelta,
                 center = center
             ),
             strokeWidth = stroke
         )
         drawEvents(
             eventsToDraw,
-            iconsSize,
-            radius = bigRadius,
-            delta = delta,
-            center = center
+            iconsSize
         )
+
+        tipEvent?.let {
+            drawText(
+                textMeasurer = tipMeasurer,
+                text = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            color = style.color,
+                            background = Color.Black.copy(alpha = 0.4f),
+                            fontSize = 18.sp,
+                            fontStyle = FontStyle.Italic
+                        )
+                    ) {
+                        append(it.comment ?: "")
+                    }
+                },
+                style = style.copy(fontSize = 12.sp),
+                topLeft = it.offset
+            )
+        }
     }
+}
+
+private fun List<EventOnPicker>.thinOut(timeout: Long): List<EventOnPicker> {
+    val result = mutableListOf<EventOnPicker>()
+
+    this.sortedByDescending { it.time }.forEachIndexed { index, event ->
+        val nextItem = this.getOrNull(index + 1)
+        when (nextItem == null) {
+            true -> result.add(event)
+            false -> when (abs(event.time - nextItem.time) < timeout) {
+                true -> result.add(event.copy(time = nextItem.time - timeout))
+                false -> result.add(event)
+            }
+        }
+    }
+    return result
 }
 
 private fun getAngleForCircleAndIcons(appliedAngle: Float, isInternalCircle: Boolean): Float {
@@ -268,26 +342,15 @@ fun getTimeWithZeroText(calendar: Calendar, period: Int): String {
 
 private fun DrawScope.drawEvents(
     images: List<EventToDraw>,
-    size: Int,
-    radius: Float,
-    delta: Float,
-    center: Offset
+    size: Int
 ) = this.drawIntoCanvas { canvas: Canvas ->
     images.forEach {
-        val offset = getSpiralOffsetByAngle(
-            angle = (getAngleForCircleAndIcons(
-                it.timeInMinutes.toFloat() / 2, it.isInternalCircle
-            ) / 180 * PI - PI / 2).toFloat(),
-            radius = radius,
-            delta = delta,
-            center = center
-        )
         drawImage(
             image = it.icon,
             dstSize = IntSize(size, size),
             dstOffset = IntOffset(
-                offset.x.toInt() - size / 2,
-                offset.y.toInt() - size / 2
+                it.offset.x.toInt(),
+                it.offset.y.toInt()
             )
         )
     }
@@ -306,15 +369,16 @@ private fun getBitmapFromResourceName(resourceName: String): ImageBitmap {
 
 data class EventOnPicker(
     val time: Long,
-    val iconName: String
+    val iconName: String,
+    val comment: String? = null
 )
 
 data class EventToDraw(
-    val timeInMinutes: Int,
-    val icon: ImageBitmap
-) {
-    val isInternalCircle = timeInMinutes > 60 * 12
-}
+    val offset: Offset,
+    val rectangle: Rect,
+    val icon: ImageBitmap,
+    val comment: String? = null
+)
 
 @Composable
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
@@ -322,7 +386,7 @@ fun TimePickerPreview() {
     Box(modifier = Modifier.background(Color.Black)) {
         TimePicker(
             initialTimeInMinutes = 1200,
-            events = listOf()
+            events = EVENTS
         ) {
 
         }

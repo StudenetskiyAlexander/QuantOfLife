@@ -3,6 +3,7 @@ package com.skyfolk.quantoflife.ui.now.date_picker
 import EventOnPicker
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
 import com.skyfolk.quantoflife.db.IQuantsStorageInteractor
+import com.skyfolk.quantoflife.entity.EventBase
 import java.util.Calendar
 
 interface MonthEventsForPickerProvider {
@@ -23,9 +24,16 @@ class MonthEventsForPickerProviderImpl(
             quant?.let {
                 EventOnPicker(
                     time = event.date,
+                    comment = getEventNote(event),
                     iconName = it.icon
                 )
             }
         }
+    }
+
+    private fun getEventNote(event: EventBase): String = when (event) {
+        is EventBase.EventMeasure -> "${event.value}, ${event.note} "
+        is EventBase.EventNote -> event.note
+        is EventBase.EventRated -> "${event.rate}★, ${event.note}"
     }
 }
