@@ -3,6 +3,7 @@ package com.skyfolk.quantoflife.ui.now
 import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,10 +28,6 @@ import com.skyfolk.quantoflife.ui.now.create.CreateEventComposeFragment
 import com.skyfolk.quantoflife.utils.setOnHideByTimeout
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import uk.co.markormesher.android_fab.SpeedDialMenuAdapter
-import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener
-import uk.co.markormesher.android_fab.SpeedDialMenuItem
-import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class NowFragment : Fragment() {
@@ -38,6 +35,7 @@ class NowFragment : Fragment() {
     private val settingsInteractor: SettingsInteractor by inject()
 
     private lateinit var binding: NowFragmentBinding
+    private var isAllFabVisible = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -183,61 +181,34 @@ class NowFragment : Fragment() {
             }
         }
 
-        binding.fab.setOnSpeedDialMenuOpenListener(object : SpeedDialMenuOpenListener {
-            override fun onOpen(floatingActionButton: uk.co.markormesher.android_fab.FloatingActionButton) {
-                binding.contentCover.visibility = View.VISIBLE
+        binding.fab.shrink()
+        binding.fab.setOnClickListener {
+            when (isAllFabVisible) {
+                true -> {
+                    binding.addGoalFab.hide()
+                    binding.addQuantFab.hide()
+                    binding.fab.shrink()
+                    binding.addFoalFabText.visibility = View.GONE
+                    binding.addQuantFabText.visibility = View.GONE
+                }
+
+                false -> {
+                    binding.addGoalFab.show()
+                    binding.addQuantFab.show()
+                    binding.fab.extend()
+                    binding.addFoalFabText.visibility = View.VISIBLE
+                    binding.addQuantFabText.visibility = View.VISIBLE
+                }
             }
-        })
-        binding.fab.setOnSpeedDialMenuCloseListener(object : SpeedDialMenuCloseListener {
-            override fun onClose(floatingActionButton: uk.co.markormesher.android_fab.FloatingActionButton) {
-                binding.contentCover.visibility = View.GONE
-            }
-        })
-
-        binding.fab.speedDialMenuAdapter = speedDialMenuAdapter
-        binding.fab.contentCoverEnabled = true
-        binding.fab.setContentCoverColour(
-            resources.getColor(
-                R.color.transparent,
-                requireContext().theme
-            )
-        )
-
-    }
-
-    private val speedDialMenuAdapter = object : SpeedDialMenuAdapter() {
-        override fun getCount(): Int = 2
-
-        override fun getMenuItem(context: Context, position: Int): SpeedDialMenuItem =
-            when (position) {
-                0 -> SpeedDialMenuItem(
-                    context,
-                    R.drawable.ic_pen,
-                    getString(R.string.menu_item_create_quant)
-                )
-
-                1 -> SpeedDialMenuItem(
-                    context,
-                    R.drawable.ic_target,
-                    getString(R.string.menu_item_create_goal)
-                )
-
-                else -> throw IllegalArgumentException("No menu item: $position")
-            }
-
-        override fun onMenuItemClick(position: Int): Boolean {
-            when (position) {
-                0 -> viewModel.openCreateNewQuantDialog(null)
-                1 -> viewModel.openCreateNewGoalDialog(null)
-            }
-            return true
+            isAllFabVisible = isAllFabVisible.not()
         }
 
-        override fun onPrepareItemLabel(context: Context, position: Int, label: TextView) {
-            label.setTypeface(label.typeface, Typeface.BOLD)
+        binding.addQuantFab.setOnClickListener {
+            viewModel.openCreateNewQuantDialog(null)
         }
 
-        // rotate the "+" icon only
-        override fun fabRotationDegrees(): Float = 135F//if (buttonIcon == 0) 135F else 0F
+        binding.addGoalFab.setOnClickListener {
+            viewModel.openCreateNewGoalDialog(null)
+        }
     }
 }
