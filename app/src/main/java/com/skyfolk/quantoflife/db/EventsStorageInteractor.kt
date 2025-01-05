@@ -4,9 +4,19 @@ import com.skyfolk.quantoflife.entity.EventBase
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.utils.getEndDateCalendar
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
-import com.skyfolk.quantoflife.utils.timeInMillis
 import io.realm.Realm
+import io.realm.RealmChangeListener
+import io.realm.RealmQuery
+import io.realm.RealmResults
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 
@@ -97,112 +107,149 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
             .distinct()
     }
 
-    suspend fun getAllEvents(includeHidden: Boolean = true): ArrayList<EventBase> =
-        withContext(Dispatchers.IO) {
-            val result = ArrayList<EventBase>()
+    fun getAllEventsAsFlow(includeHidden: Boolean = true): Flow<List<EventBase>> =
+        handlerAndReturnListFlow {
+            dbInteractor
+                .getDB()
+                .where(EventDbEntity::class.java)
+        }.flowOn(Dispatchers.IO)
+            .map { list ->
+                list
+                    .filter { !it.isHidden || includeHidden }
+                    .map { eventDbEntity ->
+                        when {
+                            (eventDbEntity.rate != null) -> EventBase.EventRated(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note,
+                                eventDbEntity.rate!!
+                            ).apply { isHidden = eventDbEntity.isHidden }
 
-            dbInteractor.getDB().freeze().where(EventDbEntity::class.java).findAll()
-                .sortedBy { it.date }
-                .filter {
-                    !it.isHidden || includeHidden
-                }
-                .forEach { eventDbEntity ->
-                    when {
-                        (eventDbEntity.rate != null) -> {
-                            result.add(
-                                EventBase.EventRated(
-                                    eventDbEntity.id,
-                                    eventDbEntity.quantId,
-                                    eventDbEntity.date,
-                                    eventDbEntity.note,
-                                    eventDbEntity.rate!!
-                                ).apply { isHidden = eventDbEntity.isHidden }
-                            )
-                        }
+                            (eventDbEntity.numericValue != null) -> EventBase.EventMeasure(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note,
+                                eventDbEntity.numericValue!!
+                            ).apply { isHidden = eventDbEntity.isHidden }
 
-                        (eventDbEntity.numericValue != null) -> {
-                            result.add(
-                                EventBase.EventMeasure(
-                                    eventDbEntity.id,
-                                    eventDbEntity.quantId,
-                                    eventDbEntity.date,
-                                    eventDbEntity.note,
-                                    eventDbEntity.numericValue!!
-                                ).apply { isHidden = eventDbEntity.isHidden }
-                            )
-                        }
-
-                        else -> {
-                            result.add(
-                                EventBase.EventNote(
-                                    eventDbEntity.id,
-                                    eventDbEntity.quantId,
-                                    eventDbEntity.date,
-                                    eventDbEntity.note
-                                ).apply { isHidden = eventDbEntity.isHidden }
-                            )
+                            else -> EventBase.EventNote(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note
+                            ).apply { isHidden = eventDbEntity.isHidden }
                         }
                     }
-                }
+            }
 
-            return@withContext result
-        }
+
+    fun getAllEvents(includeHidden: Boolean = true): ArrayList<EventBase> {
+        val result = ArrayList<EventBase>()
+
+        dbInteractor.getDB().where(EventDbEntity::class.java).findAll()
+            .sortedBy { it.date }
+            .filter {
+                !it.isHidden || includeHidden
+            }
+            .forEach { eventDbEntity ->
+                when {
+                    (eventDbEntity.rate != null) -> {
+                        result.add(
+                            EventBase.EventRated(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note,
+                                eventDbEntity.rate!!
+                            ).apply { isHidden = eventDbEntity.isHidden }
+                        )
+                    }
+
+                    (eventDbEntity.numericValue != null) -> {
+                        result.add(
+                            EventBase.EventMeasure(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note,
+                                eventDbEntity.numericValue!!
+                            ).apply { isHidden = eventDbEntity.isHidden }
+                        )
+                    }
+
+                    else -> {
+                        result.add(
+                            EventBase.EventNote(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note
+                            ).apply { isHidden = eventDbEntity.isHidden }
+                        )
+                    }
+                }
+            }
+
+        return result
+    }
 
     fun getAllEventsByMonth(
         calendar: Calendar,
         includeHidden: Boolean = true
-    ): ArrayList<EventBase>  {
-            val result = ArrayList<EventBase>()
-            val start = calendar.getStartDateCalendar(TimeInterval.Month,0).timeInMillis
-            val end = calendar.getEndDateCalendar(TimeInterval.Month,0).timeInMillis
+    ): ArrayList<EventBase> {
+        val result = ArrayList<EventBase>()
+        val start = calendar.getStartDateCalendar(TimeInterval.Month, 0).timeInMillis
+        val end = calendar.getEndDateCalendar(TimeInterval.Month, 0).timeInMillis
 
-            dbInteractor.getDB().freeze().where(EventDbEntity::class.java).between("date", start, end)
-                .findAll()
-                .sortedBy { it.date }
-                .filter {
-                    !it.isHidden || includeHidden
-                }
-                .forEach { eventDbEntity ->
-                    when {
-                        (eventDbEntity.rate != null) -> {
-                            result.add(
-                                EventBase.EventRated(
-                                    eventDbEntity.id,
-                                    eventDbEntity.quantId,
-                                    eventDbEntity.date,
-                                    eventDbEntity.note,
-                                    eventDbEntity.rate!!
-                                ).apply { isHidden = eventDbEntity.isHidden }
-                            )
-                        }
+        dbInteractor.getDB().freeze().where(EventDbEntity::class.java).between("date", start, end)
+            .findAll()
+            .sortedBy { it.date }
+            .filter {
+                !it.isHidden || includeHidden
+            }
+            .forEach { eventDbEntity ->
+                when {
+                    (eventDbEntity.rate != null) -> {
+                        result.add(
+                            EventBase.EventRated(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note,
+                                eventDbEntity.rate!!
+                            ).apply { isHidden = eventDbEntity.isHidden }
+                        )
+                    }
 
-                        (eventDbEntity.numericValue != null) -> {
-                            result.add(
-                                EventBase.EventMeasure(
-                                    eventDbEntity.id,
-                                    eventDbEntity.quantId,
-                                    eventDbEntity.date,
-                                    eventDbEntity.note,
-                                    eventDbEntity.numericValue!!
-                                ).apply { isHidden = eventDbEntity.isHidden }
-                            )
-                        }
+                    (eventDbEntity.numericValue != null) -> {
+                        result.add(
+                            EventBase.EventMeasure(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note,
+                                eventDbEntity.numericValue!!
+                            ).apply { isHidden = eventDbEntity.isHidden }
+                        )
+                    }
 
-                        else -> {
-                            result.add(
-                                EventBase.EventNote(
-                                    eventDbEntity.id,
-                                    eventDbEntity.quantId,
-                                    eventDbEntity.date,
-                                    eventDbEntity.note
-                                ).apply { isHidden = eventDbEntity.isHidden }
-                            )
-                        }
+                    else -> {
+                        result.add(
+                            EventBase.EventNote(
+                                eventDbEntity.id,
+                                eventDbEntity.quantId,
+                                eventDbEntity.date,
+                                eventDbEntity.note
+                            ).apply { isHidden = eventDbEntity.isHidden }
+                        )
                     }
                 }
+            }
 
-            return result
-        }
+        return result
+    }
 
     suspend fun alreadyHaveEvent(event: EventBase): Boolean = withContext(Dispatchers.IO) {
         return@withContext dbInteractor
@@ -218,4 +265,25 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
             .equalTo("id", event.id)
             .findFirst()
     }
+
+    private fun handlerAndReturnListFlow(block: () -> RealmQuery<EventDbEntity>): Flow<List<EventDbEntity>> =
+        callbackFlow {
+
+            val results = block().findAllAsync()!!
+            val realm = results.realm!!
+
+            val listener = RealmChangeListener<RealmResults<EventDbEntity>> { t ->
+                this.trySend(t).isSuccess
+            }
+
+            results.addChangeListener(listener)
+            this.trySend(results).isSuccess
+
+            awaitClose {
+                if (!realm.isClosed) {
+                    results.removeChangeListener(listener)
+                    realm.close()
+                }
+            }
+        }.flowOn(Dispatchers.Main)
 }

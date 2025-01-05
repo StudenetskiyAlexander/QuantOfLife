@@ -6,6 +6,7 @@ import com.skyfolk.quantoflife.entity.QuantBase
 
 interface INowViewModel {
     fun onEventCreated(event: EventBase)
+    fun onEventCanceled(event: EventBase)
     fun openCreateNewQuantDialog(existQuant: QuantBase?)
     fun openCreateNewGoalDialog(existGoalId: String?)
 }

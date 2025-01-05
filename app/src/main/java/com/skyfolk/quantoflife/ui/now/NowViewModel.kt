@@ -26,6 +26,8 @@ import com.skyfolk.quantoflife.utils.getStartDateCalendar
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -50,8 +52,18 @@ internal class NowViewModel(
     }
     val listOfQuants: LiveData<List<QuantBase>> = _listOfQuants
 
-    private val _todayTotal = MutableStateFlow(0.0)
-    val todayTotal: StateFlow<Double> = _todayTotal.asStateFlow()
+    val todayTotal = eventsStorageInteractor.getAllEventsAsFlow().map { list ->
+        val startDate = dateTimeRepository.getCalendar().getStartDateCalendar(
+            TimeInterval.Today,
+            settingsInteractor.startDayTime
+        ).timeInMillis
+        val endDate = dateTimeRepository.getTimeInMillis()
+
+        getTotal(
+            quantsStorageInteractor.getAllQuantsList(false),
+            list.filter { it.date in startDate until endDate }
+        )
+    }
 
     private val _listOfGoals = MutableLiveData<List<GoalPresentation>>().apply {
         value = arrayListOf()
@@ -96,7 +108,8 @@ internal class NowViewModel(
     }
 
     override fun openCreateNewGoalDialog(existGoalId: String?) {
-        val dialog = CreateGoalDialogFragment(existGoalId, settingsInteractor, goalStorageInteractor)
+        val dialog =
+            CreateGoalDialogFragment(existGoalId, settingsInteractor, goalStorageInteractor)
         dialog.setDialogListener(object : CreateGoalDialogFragment.DialogListener {
             override fun onConfirm(goal: Goal) {
                 goalStorageInteractor.addGoalToDB(goal)
@@ -121,22 +134,16 @@ internal class NowViewModel(
         }
     }
 
+    override fun onEventCanceled(event: EventBase) {
+        eventsStorageInteractor.deleteEvent(event) {
+            quantsStorageInteractor.decrementQuantUsage(event.quantId)
+            _listOfQuants.value = quantsStorageInteractor.getAllQuantsList(false)
+            updateTodayTotal()
+        }
+    }
+
     private fun updateTodayTotal() {
         viewModelScope.launch {
-            val startDate = dateTimeRepository.getCalendar().getStartDateCalendar(
-                TimeInterval.Today,
-                settingsInteractor.startDayTime
-            ).timeInMillis
-            val endDate = dateTimeRepository.getTimeInMillis()
-
-            val resultList = ArrayList(
-                eventsStorageInteractor.getAllEvents()
-                    .filter { it.date in startDate until endDate })
-
-            _todayTotal.update {
-                getTotal(quantsStorageInteractor.getAllQuantsList(false), resultList)
-            }
-
             _listOfGoals.value =
                 goalStorageInteractor.getListOfGoals().map { goalToPresentationMapper.invoke(it) }
         }

@@ -12,4 +12,5 @@ interface IQuantsStorageInteractor {
     fun getQuantById(id: String) : QuantBase?
     fun getQuantIdByName(name: String) : String?
     fun incrementQuantUsage(id: String)
+    fun decrementQuantUsage(id: String)
 }

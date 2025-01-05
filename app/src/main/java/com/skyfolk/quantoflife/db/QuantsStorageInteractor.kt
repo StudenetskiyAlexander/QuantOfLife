@@ -87,6 +87,14 @@ class QuantsStorageInteractor(private val dbInteractor: DBInteractor) : IQuantsS
         }
     }
 
+    override fun decrementQuantUsage(id: String) {
+        dbInteractor.getDB().executeTransactionAsync { realm ->
+            realm.where(QuantDbEntity::class.java).equalTo("id", id).findFirst()?.let {
+                it.usageCount--
+            }
+        }
+    }
+
     private fun existQuantOrNull(realm: Realm, quant: QuantBase): QuantDbEntity? {
         return realm.where(QuantDbEntity::class.java)
             .equalTo("id", quant.id)

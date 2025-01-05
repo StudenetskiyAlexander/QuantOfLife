@@ -47,6 +47,8 @@ class FeedsViewModel(
             quantCategoryNames = settingsInteractor.getCategoryNames()
         )
     )
+
+    private val l:List<Int> = mutableListOf()
     override val state: StateFlow<FeedsFragmentState> = _state.asStateFlow()
 
     private val _singleLifeEvent = SingleLiveEvent<FeedsFragmentSingleLifeEvent>()
@@ -62,6 +64,7 @@ class FeedsViewModel(
             is DeleteEventAction -> deleteEvent(action)
             is EventEditedAction -> eventEdited(action)
         }
+        l.component1()
     }
 
     fun getStoredSelectedTimeInterval(): LongRange {

@@ -122,11 +122,10 @@ class NowFragment : Fragment() {
                         Snackbar.LENGTH_LONG
                     )
                     snackBar.setAction(getString(R.string.cancel)) {
-                    }
-                    snackBar.setOnHideByTimeout {
-                        viewModel.onEventCreated(event)
+                        viewModel.onEventCanceled(event)
                     }
                     snackBar.show()
+                    viewModel.onEventCreated(event)
                 }
 
                 override fun onDecline() {
