@@ -22,5 +22,6 @@ val EVENT_DISPLAYABLE = EventListItem.EventDisplayable(
 )
 
 val EVENTS_SEPARATOR_LINE = EventListItem.SeparatorLine(
-    text = "4 сентября 2023"
+    text = "4 сентября 2023",
+    listOf(EVENT_DISPLAYABLE),
 )

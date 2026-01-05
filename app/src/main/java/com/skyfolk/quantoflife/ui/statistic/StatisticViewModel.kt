@@ -149,11 +149,10 @@ class StatisticViewModel(
                 val calendar = dateTimeRepository.getCalendar()
                 calendar[Calendar.YEAR] = selectedYear.year
                 calendar
-                    .getStartDateCalendar(timeInterval, settingsInteractor.startDayTime)
-                    .also { Log.d("skyfolk-last_week", "getEntries: ${it[Calendar.DAY_OF_MONTH]}") }
+                    .getEndDateCalendar(TimeInterval.Year, settingsInteractor.startDayTime)
+//                    .getStartDateCalendar(timeInterval, settingsInteractor.startDayTime)
+//                    .also { Log.d("skyfolk-last_week", "getEntries: ${it[Calendar.DAY_OF_MONTH]}") }
                     .timeInMillis
-                    .also { Log.d("skyfolk-last_week", "getEntries: ${it}") }
-
             }
         }
         lastDate = min(lastDate, dateTimeRepository.getTimeInMillis())

@@ -8,9 +8,9 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.skyfolk.quantoflife.databinding.CreateGoalDialogBinding
-import com.skyfolk.quantoflife.db.GoalStorageInteractor
 import com.skyfolk.quantoflife.db.IGoalStorageInteractor
-import com.skyfolk.quantoflife.entity.*
+import com.skyfolk.quantoflife.entity.Goal
+import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 
@@ -23,7 +23,8 @@ class CreateGoalDialogFragment(
     private lateinit var binding: CreateGoalDialogBinding
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = CreateGoalDialogBinding.inflate(inflater, container, false)

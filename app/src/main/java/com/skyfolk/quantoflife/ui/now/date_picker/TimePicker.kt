@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,17 +64,17 @@ fun TimePicker(
 
     val eventsToDraw = mutableListOf<EventToDraw>()
 
-    val spaceBeetweenCyrcle = 120f
+    val spaceBetweenCycle = 120f
     val iconsSize = 130
     val stroke = 10f
     val spiralDelta = 13f
     val stepAngle = 30f
 
     val coroutineScope = rememberCoroutineScope()
-    var width by remember { mutableStateOf(0) }
-    var height by remember { mutableStateOf(0) }
-    var radius by remember { mutableStateOf(0f) }
-    var bigRadius by remember { mutableStateOf(0f) }
+    var width by remember { mutableIntStateOf(0) }
+    var height by remember { mutableIntStateOf(0) }
+    var radius by remember { mutableFloatStateOf(0f) }
+    var bigRadius by remember { mutableFloatStateOf(0f) }
     var center by remember { mutableStateOf(Offset.Zero) }
     var tipEvent by remember { mutableStateOf<EventToDraw?>(null) }
 
@@ -91,7 +93,7 @@ fun TimePicker(
         textMeasurer.measure(getTextFromAngle(lastAngle, isSelectInternalCircle), style)
     }
 
-    eventsToDraw.addAll(events.thinOut(60*60*1000).map {
+    eventsToDraw.addAll(events.thinOut(10*60*1000).map {
         val tmpCalendar = Calendar.getInstance()
         tmpCalendar.timeInMillis = it.time
         val totalMinutes = tmpCalendar[Calendar.HOUR_OF_DAY] * 60 + tmpCalendar[Calendar.MINUTE]
@@ -128,8 +130,8 @@ fun TimePicker(
             height = it.size.height
             center = Offset(width / 2f, height / 2f)
             radius = min(
-                width.toFloat() - spaceBeetweenCyrcle,
-                height.toFloat() - spaceBeetweenCyrcle
+                width.toFloat() - spaceBetweenCycle,
+                height.toFloat() - spaceBetweenCycle
             ) / 2f - padding - stroke / 2f
             bigRadius = min(width.toFloat(), height.toFloat()) / 2f - padding - stroke / 2f
         }
@@ -340,7 +342,7 @@ fun getTimeWithZeroText(calendar: Calendar, period: Int): String {
     }
 }
 
-private fun DrawScope.drawEvents(
+fun DrawScope.drawEvents(
     images: List<EventToDraw>,
     size: Int
 ) = this.drawIntoCanvas { canvas: Canvas ->
@@ -357,7 +359,7 @@ private fun DrawScope.drawEvents(
 }
 
 @Composable
-private fun getBitmapFromResourceName(resourceName: String): ImageBitmap {
+fun getBitmapFromResourceName(resourceName: String): ImageBitmap {
     val context = LocalContext.current
     val imageResource = context.resources.getIdentifier(
         resourceName,
@@ -387,8 +389,6 @@ fun TimePickerPreview() {
         TimePicker(
             initialTimeInMinutes = 1200,
             events = EVENTS
-        ) {
-
-        }
+        ) {}
     }
 }

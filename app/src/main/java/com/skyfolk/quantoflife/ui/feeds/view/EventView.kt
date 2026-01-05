@@ -104,43 +104,13 @@ fun EventItem(
                     when (event.valueType) {
                         ValueTypeDisplayable.STARS -> {
                             event.value ?: return@Row
-                            event.bonuses ?: return@Row
 
                             RatingBar(
                                 rating = event.value.toFloat(),
                                 color = Color.Cyan,
                                 modifier = Modifier.height(20.dp)
                             )
-
-                            var physicalBonus = 0.0
-                            var emotionBonus = 0.0
-                            var evolutionBonus = 0.0
-
-                            for (bonus in event.bonuses) {
-                                when (bonus.category) {
-                                    QuantCategory.Physical -> {
-                                        physicalBonus += bonus.baseBonus + bonus.bonusForEachRating * event.value
-                                    }
-
-                                    QuantCategory.Emotion -> {
-                                        emotionBonus += bonus.baseBonus + bonus.bonusForEachRating * event.value
-                                    }
-
-                                    QuantCategory.Evolution -> {
-                                        evolutionBonus += bonus.baseBonus + bonus.bonusForEachRating * event.value
-                                    }
-
-                                    else -> {}
-                                }
-                            }
-
-                            Text(
-                                "${physicalBonus.format(1)}|${emotionBonus.format(1)}|${
-                                    evolutionBonus.format(
-                                        1
-                                    )
-                                }", fontSize = 14.sp, fontStyle = FontStyle.Italic, maxLines = 1
-                            )
+                            BonusesTotalView(listOf(event))
                         }
 
                         ValueTypeDisplayable.NUMBER -> {

@@ -7,7 +7,7 @@ import com.skyfolk.quantoflife.entity.EventBase
 import java.util.Calendar
 
 interface MonthEventsForPickerProvider {
-    fun provide(currentMonth: Calendar): List<EventOnPicker>
+    fun provide(currentMonth: Calendar = Calendar.getInstance()): List<EventOnPicker>
 }
 
 class MonthEventsForPickerProviderImpl(

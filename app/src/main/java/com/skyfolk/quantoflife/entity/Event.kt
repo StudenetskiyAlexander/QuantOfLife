@@ -16,7 +16,8 @@ sealed class EventListItem(open val isEvent: Boolean = true) {
     ): EventListItem()
 
     data class SeparatorLine(
-        val text: String
+        val text: String,
+        val events: List<EventDisplayable>,
     ): EventListItem(isEvent = false)
 }
 

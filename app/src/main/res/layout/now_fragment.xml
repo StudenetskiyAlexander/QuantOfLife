@@ -57,6 +57,15 @@
                 app:layout_constraintTop_toBottomOf="@id/today_rating"
                 tools:text="Великолепно!" />
 
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/today_compose_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                app:layout_constrainedHeight="true"
+                app:layout_constraintTop_toBottomOf="@id/today_rating_score"
+                app:layout_constraintHeight_max="100dp" />
+
             <View
                 android:id="@+id/total_description_line"
                 android:layout_width="match_parent"
@@ -64,7 +73,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
                 android:background="@android:color/background_dark"
-                app:layout_constraintTop_toBottomOf="@id/today_rating_score" />
+                app:layout_constraintTop_toBottomOf="@id/today_compose_view" />
 
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/goals_compose_view"

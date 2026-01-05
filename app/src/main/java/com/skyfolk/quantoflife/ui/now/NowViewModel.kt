@@ -1,5 +1,6 @@
 package com.skyfolk.quantoflife.ui.now
 
+import EventOnPicker
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -16,22 +17,20 @@ import com.skyfolk.quantoflife.entity.QuantBase
 import com.skyfolk.quantoflife.feeds.getTotal
 import com.skyfolk.quantoflife.import.ImportInteractor
 import com.skyfolk.quantoflife.mapper.QuantBaseToCreateQuantTypeMapper
+import com.skyfolk.quantoflife.mapper.TimeIntervalToPeriodInMillisMapper
 import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.timeInterval.TimeInterval
 import com.skyfolk.quantoflife.ui.create_quant.CreateQuantDialogFragment
 import com.skyfolk.quantoflife.ui.goals.CreateGoalDialogFragment
 import com.skyfolk.quantoflife.ui.goals.GoalToPresentationMapper
+import com.skyfolk.quantoflife.ui.now.date_picker.MonthEventsForPickerProvider
 import com.skyfolk.quantoflife.utils.SingleLiveEvent
 import com.skyfolk.quantoflife.utils.getStartDateCalendar
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class NowViewModel(
+    private val timeIntervalToPeriodInMillisMapper: TimeIntervalToPeriodInMillisMapper,
     private val quantsStorageInteractor: IQuantsStorageInteractor,
     private val eventsStorageInteractor: EventsStorageInteractor,
     private val goalStorageInteractor: IGoalStorageInteractor,
@@ -64,6 +63,28 @@ internal class NowViewModel(
             list.filter { it.date in startDate until endDate }
         )
     }
+
+    val todayEvents = eventsStorageInteractor
+        .getAllEventsAsFlow()
+        .map {
+            it
+                .filter {
+                    it.date in timeIntervalToPeriodInMillisMapper.invoke(
+                        TimeInterval.Today,
+                        settingsInteractor.startDayTime
+                    )
+                }.mapNotNull { event ->
+                    val quants = quantsStorageInteractor.getAllQuantsList(true)
+                    val quant = quants.firstOrNull { it.id == event.quantId }
+                    quant?.let {
+                        EventOnPicker(
+                            time = event.date,
+                            comment = getEventNote(event),
+                            iconName = it.icon
+                        )
+                    }
+                }.sortedBy { it.time }
+        }
 
     private val _listOfGoals = MutableLiveData<List<GoalPresentation>>().apply {
         value = arrayListOf()
@@ -145,7 +166,14 @@ internal class NowViewModel(
     private fun updateTodayTotal() {
         viewModelScope.launch {
             _listOfGoals.value =
-                goalStorageInteractor.getListOfGoals().map { goalToPresentationMapper.invoke(it) }
+                goalStorageInteractor.getListOfGoals()
+                    .map { goalToPresentationMapper.invoke(it) }
         }
+    }
+
+    private fun getEventNote(event: EventBase): String = when (event) {
+        is EventBase.EventMeasure -> "${event.value}, ${event.note} "
+        is EventBase.EventNote -> event.note
+        is EventBase.EventRated -> "${event.rate}★, ${event.note}"
     }
 }

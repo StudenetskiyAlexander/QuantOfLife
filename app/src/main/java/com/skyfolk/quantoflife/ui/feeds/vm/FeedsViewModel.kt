@@ -48,7 +48,7 @@ class FeedsViewModel(
         )
     )
 
-    private val l:List<Int> = mutableListOf()
+    private val l: List<Int> = mutableListOf()
     override val state: StateFlow<FeedsFragmentState> = _state.asStateFlow()
 
     private val _singleLifeEvent = SingleLiveEvent<FeedsFragmentSingleLifeEvent>()
@@ -64,7 +64,6 @@ class FeedsViewModel(
             is DeleteEventAction -> deleteEvent(action)
             is EventEditedAction -> eventEdited(action)
         }
-        l.component1()
     }
 
     fun getStoredSelectedTimeInterval(): LongRange {
@@ -191,10 +190,13 @@ class FeedsViewModel(
                 TimeInterval.Today,
                 settingsInteractor.startDayTime
             )
+
             if (lastEventCalendar != null && newDayCalendar[Calendar.DAY_OF_YEAR] != lastEventCalendar!![Calendar.DAY_OF_YEAR]) {
                 result.add(
                     EventListItem.SeparatorLine(
-                        lastEventCalendar!!.timeInMillis.toDateWithoutHourAndMinutes()
+                        lastEventCalendar!!.timeInMillis.toDateWithoutHourAndMinutes(),
+                        events.filter { it.date in lastEventCalendar!!.timeInMillis..lastEventCalendar!!.timeInMillis + MILLIS_IN_DAY }
+                            .mapNotNull { it.toDisplayableEvents(allQuantsFound) }
                     )
                 )
             }
@@ -208,10 +210,19 @@ class FeedsViewModel(
             settingsInteractor.startDayTime
         )
         firstDate?.timeInMillis?.toDateWithoutHourAndMinutes()?.let {
-            result.add(EventListItem.SeparatorLine(it))
+            result.add(
+                EventListItem.SeparatorLine(
+                    it,
+                    events.filter { it.date in firstDate.timeInMillis..firstDate.timeInMillis + MILLIS_IN_DAY }
+                        .mapNotNull { it.toDisplayableEvents(allQuantsFound) }
+                ))
         }
 
         return result
+    }
+
+    private companion object {
+        val MILLIS_IN_DAY = 24 * 60 * 60 * 1000
     }
 }
 

@@ -1,16 +1,16 @@
 package com.skyfolk.quantoflife.ui.now
 
-import android.content.Context
-import android.graphics.Typeface
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -25,7 +25,9 @@ import com.skyfolk.quantoflife.settings.SettingsInteractor
 import com.skyfolk.quantoflife.ui.goals.view.GoalView
 import com.skyfolk.quantoflife.ui.now.CreateEventDialogFragment.DialogListener
 import com.skyfolk.quantoflife.ui.now.create.CreateEventComposeFragment
-import com.skyfolk.quantoflife.utils.setOnHideByTimeout
+import com.skyfolk.quantoflife.ui.now.date_picker.DefaultDatePickerConfig.Companion.timePickerHeight
+import drawEvents
+import getBitmapFromResourceName
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -72,6 +74,21 @@ class NowFragment : Fragment() {
                     in 6.0..8.0 -> todayScore[3]
                     in 8.0..Double.MAX_VALUE -> todayScore[4]
                     else -> ""
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.todayEvents.collect { events ->
+                binding.todayComposeView.setContent {
+                    Row {
+                        events.forEach {
+                            Image(
+                                bitmap = getBitmapFromResourceName(resourceName = it.iconName),
+                                contentDescription = null
+                            )
+                        }
+                    }
                 }
             }
         }
