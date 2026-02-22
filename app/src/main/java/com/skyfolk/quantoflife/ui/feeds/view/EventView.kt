@@ -18,20 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.skyfolk.quantoflife.R
 import com.skyfolk.quantoflife.entity.EventListItem
-import com.skyfolk.quantoflife.entity.QuantCategory
 import com.skyfolk.quantoflife.entity.ValueTypeDisplayable
 import com.skyfolk.quantoflife.ui.feeds.view.preview.EVENT_DISPLAYABLE
 import com.skyfolk.quantoflife.ui.theme.Colors
-import com.skyfolk.quantoflife.utils.format
 import com.skyfolk.quantoflife.utils.toDate
-import java.util.Calendar
-
 
 @Composable
 fun EventItem(

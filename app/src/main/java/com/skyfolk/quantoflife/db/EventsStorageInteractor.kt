@@ -63,6 +63,7 @@ class EventsStorageInteractor(private val dbInteractor: DBInteractor) {
                 existEvent.numericValue = numericValue
                 existEvent.note = event.note
                 existEvent.isHidden = event.isHidden
+                existEvent.quantId = event.quantId
             } else {
                 it.insertOrUpdate(eventDbElement)
             }

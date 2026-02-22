@@ -1,5 +1,6 @@
 package com.skyfolk.quantoflife.ui.feeds.vm
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.skyfolk.quantoflife.db.EventsStorageInteractor
@@ -172,6 +173,7 @@ class FeedsViewModel(
     }
 
     private fun eventEdited(action: EventEditedAction) {
+        Log.d("morrow", "eventEdited: ${action.event.quantId}")
         eventsStorageInteractor.addEventToDB(action.event) { runSearch() }
     }
 
